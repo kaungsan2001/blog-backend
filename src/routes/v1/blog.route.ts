@@ -1,25 +1,25 @@
 import { Router } from "express";
-import authMiddleware from "../middlewares/auth.middleware";
+import authMiddleware from "../../middlewares/auth.middleware";
 import {
   createBlog,
   getAllBlogs,
   getBlogById,
   updateBlog,
   deleteBlog,
-} from "../controllers/blog.controller";
-import { validatedMiddleware } from "../middlewares/validated.middleware";
+} from "../../controllers/blog.controller";
+import { validatedMiddleware } from "../../middlewares/validated.middleware";
 import {
   createBlogValidator,
   updateBlogValidator,
   deleteBlogValidator,
   getBlogByIdValidator,
   getAllBlogsValidator,
-} from "../validators/blog.validator";
+} from "../../validators/blog.validator";
 
 const router = Router();
 
 router.post(
-  "/",
+  "/create",
   authMiddleware,
   createBlogValidator,
   validatedMiddleware,

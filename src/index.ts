@@ -6,7 +6,8 @@ import express, {
 import { toNodeHandler } from "better-auth/node";
 import cors from "cors";
 import { auth } from "./lib/auth";
-import blogRouter from "./routes/blog.route";
+import blogRouter from "./routes/v1/blog.route";
+import commentRouter from "./routes/v1/comment.route";
 
 const app = express();
 const port = 8000;
@@ -14,6 +15,7 @@ app.use(
   cors({
     origin: "http://localhost:5173",
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE"],
   }),
 );
 
@@ -21,7 +23,8 @@ app.all("/api/auth/{*any}", toNodeHandler(auth));
 
 app.use(express.json());
 
-app.use("/api/blog", blogRouter);
+app.use("/api/v1/blog", blogRouter);
+app.use("/api/v1/:blogId/comments", commentRouter);
 
 app.use(errorHandler);
 
