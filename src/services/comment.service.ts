@@ -17,6 +17,15 @@ export const getCommentsService = async (blogId: string) => {
     where: {
       blogId,
     },
+    include: {
+      author: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        },
+      },
+    },
   });
   return comments;
 };

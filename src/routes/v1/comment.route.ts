@@ -12,10 +12,10 @@ import {
 import { validatedMiddleware } from "../../middlewares/validated.middleware";
 import authMiddleware from "../../middlewares/auth.middleware";
 
-const router = Router();
+const router = Router({ mergeParams: true });
 
 router.post(
-  "/create",
+  "/",
   authMiddleware,
   createCommentValidator,
   validatedMiddleware,
