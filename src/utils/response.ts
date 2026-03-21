@@ -5,16 +5,19 @@ export function successResponse({
   data,
   message,
   statusCode = 200,
+  meta,
 }: {
   res: Response;
   data: any;
   message: string;
   statusCode?: number;
+  meta?: any;
 }) {
   return res.status(statusCode).json({
     success: true,
     message,
     data,
+    ...(meta && { meta }),
   });
 }
 

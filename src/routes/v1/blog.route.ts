@@ -26,7 +26,12 @@ router.post(
   createBlog,
 );
 router.get("/", getAllBlogsValidator, validatedMiddleware, getAllBlogs);
-router.get("/:id", getBlogByIdValidator, validatedMiddleware, getBlogById);
+router.get(
+  "/detail/:id",
+  getBlogByIdValidator,
+  validatedMiddleware,
+  getBlogById,
+);
 router.put(
   "/:id",
   authMiddleware,

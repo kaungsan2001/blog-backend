@@ -1,3 +1,4 @@
+import createHttpError from "http-errors";
 import { prisma } from "../db";
 
 export const createBlogService = async ({
@@ -26,10 +27,12 @@ export const createBlogService = async ({
 };
 
 export const getAllBlogsService = async ({
+  query,
   page,
   limit,
   skip,
 }: {
+  query: string;
   page: number;
   limit: number;
   skip: number;
@@ -37,6 +40,23 @@ export const getAllBlogsService = async ({
   const blogs = await prisma.blog.findMany({
     skip,
     take: limit,
+    where: query
+      ? {
+          OR: [
+            {
+              title: {
+                contains: query,
+                mode: "insensitive",
+              },
+            },
+            {
+              category: {
+                contains: query,
+              },
+            },
+          ],
+        }
+      : {},
     include: {
       author: {
         select: {
@@ -45,9 +65,30 @@ export const getAllBlogsService = async ({
         },
       },
     },
+    orderBy: {
+      createdAt: "desc",
+    },
   });
 
-  const totalBlogs = await prisma.blog.count();
+  const totalBlogs = await prisma.blog.count({
+    where: query
+      ? {
+          OR: [
+            {
+              title: {
+                contains: query,
+                mode: "insensitive",
+              },
+            },
+            {
+              category: {
+                contains: query,
+              },
+            },
+          ],
+        }
+      : {},
+  });
   const totalPages = Math.ceil(totalBlogs / limit);
   const metaData = {
     totalBlogs,
@@ -91,14 +132,29 @@ export const updateBlogService = async ({
   content,
   category,
   image,
+  userId,
 }: {
   id: string;
   title?: string;
   content?: string;
   category?: string;
   image?: string;
+  userId: string;
 }) => {
-  const blog = await prisma.blog.update({
+  const blog = await prisma.blog.findUnique({
+    where: {
+      id,
+    },
+  });
+  if (!blog) {
+    throw createHttpError.NotFound("Blog Not Found.");
+  }
+  if (blog.authorId !== userId) {
+    throw createHttpError.Unauthorized(
+      "You are not authorized to update this blog",
+    );
+  }
+  const updatedBlog = await prisma.blog.update({
     where: {
       id,
     },
@@ -109,14 +165,27 @@ export const updateBlogService = async ({
       image,
     },
   });
-  return blog;
+  return updatedBlog;
 };
 
-export const deleteBlogService = async (id: string) => {
-  const blog = await prisma.blog.delete({
+export const deleteBlogService = async (id: string, userId: string) => {
+  const blog = await prisma.blog.findUnique({
     where: {
       id,
     },
   });
-  return blog;
+  if (!blog) {
+    throw createHttpError.NotFound("Blog Not Found.");
+  }
+  if (blog.authorId !== userId) {
+    throw createHttpError.Unauthorized(
+      "You are not authorized to delete this blog",
+    );
+  }
+  const deletedBlog = await prisma.blog.delete({
+    where: {
+      id,
+    },
+  });
+  return deletedBlog;
 };

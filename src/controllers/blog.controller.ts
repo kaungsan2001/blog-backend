@@ -29,16 +29,23 @@ export const createBlog = asyncHandler(async (req: Request, res: Response) => {
 });
 
 export const getAllBlogs = asyncHandler(async (req: Request, res: Response) => {
+  const { query } = req.query as { query: string };
   const page = parseInt(req.query.page as string) || 1;
-  const limit = parseInt(req.query.limit as string) || 10;
+  const limit = parseInt(req.query.limit as string) || 12;
   const skip = (page - 1) * limit;
 
-  const blogs = await getAllBlogsService({ page, limit, skip });
+  const { blogs, metaData } = await getAllBlogsService({
+    query,
+    page,
+    limit,
+    skip,
+  });
   const response = {
     res,
     data: blogs,
     message: "Blogs Fetched Successfully",
     statusCode: 200,
+    meta: metaData,
   };
   successResponse(response);
 });
@@ -64,6 +71,7 @@ export const updateBlog = asyncHandler(async (req: Request, res: Response) => {
     content,
     category,
     image,
+    userId: req.user.id,
   });
   const response = {
     res,
@@ -76,7 +84,7 @@ export const updateBlog = asyncHandler(async (req: Request, res: Response) => {
 
 export const deleteBlog = asyncHandler(async (req: Request, res: Response) => {
   const id = req.params.id as string;
-  const blog = await deleteBlogService(id);
+  const blog = await deleteBlogService(id, req.user.id);
   const response = {
     res,
     data: blog,
