@@ -27,3 +27,7 @@ export const getAllBlogsValidator = [
   query("page").optional().notEmpty().withMessage("Page is required"),
   query("limit").optional().notEmpty().withMessage("Limit is required"),
 ];
+
+export const searchBlogValidator = [
+  query("q").notEmpty().isString().withMessage("Query is required"),
+];

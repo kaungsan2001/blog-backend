@@ -22,3 +22,7 @@ export const getUserListValidator = [
 export const updateProfileValidator = [
   body("name").isString().withMessage("Name must be a string"),
 ];
+
+export const searchUserValidator = [
+  query("q").isString().withMessage("Query must be a string"),
+];

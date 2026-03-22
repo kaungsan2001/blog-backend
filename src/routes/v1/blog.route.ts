@@ -1,11 +1,12 @@
 import { Router } from "express";
 import authMiddleware from "../../middlewares/auth.middleware";
 import {
-  createBlog,
-  getAllBlogs,
-  getBlogById,
-  updateBlog,
-  deleteBlog,
+  createBlogController,
+  getAllBlogsController,
+  getBlogByIdController,
+  updateBlogController,
+  deleteBlogController,
+  searchBlogController,
 } from "../../controllers/blog.controller";
 import { validatedMiddleware } from "../../middlewares/validated.middleware";
 import {
@@ -14,37 +15,59 @@ import {
   deleteBlogValidator,
   getBlogByIdValidator,
   getAllBlogsValidator,
+  searchBlogValidator,
 } from "../../validators/blog.validator";
 
 const router = Router();
 
+// create a new blog route
 router.post(
   "/create",
   authMiddleware,
   createBlogValidator,
   validatedMiddleware,
-  createBlog,
+  createBlogController,
 );
-router.get("/", getAllBlogsValidator, validatedMiddleware, getAllBlogs);
+
+// get all blogs route
 router.get(
-  "/detail/:id",
+  "/",
+  getAllBlogsValidator,
+  validatedMiddleware,
+  getAllBlogsController,
+);
+
+// get a single blog by id route
+router.get(
+  "/details/:id",
   getBlogByIdValidator,
   validatedMiddleware,
-  getBlogById,
+  getBlogByIdController,
 );
+
+// update a blog route
 router.put(
   "/:id",
   authMiddleware,
   updateBlogValidator,
   validatedMiddleware,
-  updateBlog,
+  updateBlogController,
 );
+
+// delete a blog route
 router.delete(
   "/:id",
   authMiddleware,
   deleteBlogValidator,
   validatedMiddleware,
-  deleteBlog,
+  deleteBlogController,
 );
 
+// search blogs route
+router.get(
+  "/search",
+  searchBlogValidator,
+  validatedMiddleware,
+  searchBlogController,
+);
 export default router;

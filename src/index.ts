@@ -24,7 +24,7 @@ app.all("/api/auth/{*any}", toNodeHandler(auth));
 
 app.use(express.json());
 
-app.use("/api/v1/blog", blogRouter);
+app.use("/api/v1/blogs", blogRouter);
 app.use("/api/v1/blogs/:blogId/comments", commentRouter);
 app.use("/api/v1/users", userRouter);
 

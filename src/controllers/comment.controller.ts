@@ -7,10 +7,11 @@ import {
 import { successResponse } from "../utils/response";
 import asyncHandler from "express-async-handler";
 
+// create a comment
 export const createCommentController = asyncHandler(
   async (req: Request, res: Response) => {
     const { content } = req.body;
-    const authorId = req.user?.id;
+    const authorId = req.user.id;
     const blogId = req.params.blogId as string;
     const newComment = await createCommentService({
       content,
@@ -26,6 +27,7 @@ export const createCommentController = asyncHandler(
   },
 );
 
+// get all comments by blog id
 export const getCommentsController = asyncHandler(
   async (req: Request, res: Response) => {
     const blogId = req.params.blogId as string;
@@ -40,10 +42,11 @@ export const getCommentsController = asyncHandler(
   },
 );
 
+// delete a comment by id
 export const deleteCommentController = asyncHandler(
   async (req: Request, res: Response) => {
     const commentId = req.params.commentId as string;
-    const authorId = req.user?.id;
+    const authorId = req.user.id;
     const deletedComment = await deleteCommentService({
       commentId,
       authorId,

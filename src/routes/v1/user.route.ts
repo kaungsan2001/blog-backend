@@ -3,6 +3,7 @@ import {
   getUserByIdController,
   getUserBlogsController,
   getUserListController,
+  searchUserController,
 } from "../../controllers/user.controller";
 import { validatedMiddleware } from "../../middlewares/validated.middleware";
 import {
@@ -10,6 +11,7 @@ import {
   getUserBlogsValidator,
   getUserListValidator,
   updateProfileValidator,
+  searchUserValidator,
 } from "../../validators/user.validator";
 import { updateProfileController } from "../../controllers/user.controller";
 import authMiddleware from "../../middlewares/auth.middleware";
@@ -17,7 +19,7 @@ import authMiddleware from "../../middlewares/auth.middleware";
 const router = Router();
 
 router.get(
-  "/:id",
+  "/details/:id",
   getUserByIdValidator,
   validatedMiddleware,
   getUserByIdController,
@@ -43,4 +45,10 @@ router.put(
   updateProfileController,
 );
 
+router.get(
+  "/search",
+  searchUserValidator,
+  validatedMiddleware,
+  searchUserController,
+);
 export default router;
