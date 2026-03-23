@@ -31,3 +31,23 @@ export const getAllBlogsValidator = [
 export const searchBlogValidator = [
   query("q").notEmpty().isString().withMessage("Query is required"),
 ];
+
+export const saveBlogValidator = [
+  param("blogId").notEmpty().withMessage("Blog Id is required"),
+];
+
+export const followUserValidator = [
+  param("userId").notEmpty().withMessage("User Id is required"),
+];
+
+export const unfollowUserValidator = [
+  param("userId").notEmpty().withMessage("User Id is required"),
+];
+
+export const getAllFollowersValidator = [
+  param("userId").notEmpty().withMessage("User Id is required"),
+];
+
+export const getAllFollowingValidator = [
+  param("userId").notEmpty().withMessage("User Id is required"),
+];

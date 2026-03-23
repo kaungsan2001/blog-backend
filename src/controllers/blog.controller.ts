@@ -6,6 +6,8 @@ import {
   updateBlogService,
   deleteBlogService,
   searchBlogService,
+  saveBlogService,
+  getSavedBlogsService,
 } from "../services/blog.service";
 import { successResponse } from "../utils/response";
 import asyncHandler from "express-async-handler";
@@ -120,6 +122,42 @@ export const searchBlogController = asyncHandler(
       res,
       data: blogs,
       message: "Blogs Fetched Successfully",
+      statusCode: 200,
+      meta: metaData,
+    });
+  },
+);
+
+// save or unsave blog
+export const saveBlogController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { blogId } = req.params;
+    const blog = await saveBlogService(blogId as string, req.user.id);
+    successResponse({
+      res,
+      data: blog,
+      message: "Blog Saved Successfully",
+      statusCode: 200,
+    });
+  },
+);
+
+// get all saved blogs
+export const getSavedBlogsController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 12;
+    const skip = (page - 1) * limit;
+    const { savedBlogs, metaData } = await getSavedBlogsService({
+      page,
+      limit,
+      skip,
+      userId: req.user.id,
+    });
+    successResponse({
+      res,
+      data: savedBlogs,
+      message: "Saved Blogs Fetched Successfully",
       statusCode: 200,
       meta: metaData,
     });

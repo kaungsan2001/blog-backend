@@ -14,6 +14,15 @@ import authMiddleware from "../../middlewares/auth.middleware";
 
 const router = Router({ mergeParams: true });
 
+// get all comments route by blog id
+router.get(
+  "/",
+  getCommentsValidator,
+  validatedMiddleware,
+  getCommentsController,
+);
+
+// create a new comment route
 router.post(
   "/",
   authMiddleware,
@@ -22,13 +31,7 @@ router.post(
   createCommentController,
 );
 
-router.get(
-  "/",
-  getCommentsValidator,
-  validatedMiddleware,
-  getCommentsController,
-);
-
+// delete a comment route by comment id
 router.delete(
   "/:commentId",
   authMiddleware,

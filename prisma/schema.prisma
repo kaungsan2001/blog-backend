@@ -18,18 +18,21 @@ enum Role {
 }
 
 model User {
-  id            String    @id
+  id            String      @id
   name          String
   email         String
-  emailVerified Boolean   @default(false)
+  emailVerified Boolean     @default(false)
   image         String?
-  role          Role      @default(USER)
+  role          Role        @default(USER)
   blogs         Blog[]
   comments      Comment[]
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
   sessions      Session[]
   accounts      Account[]
+  following     Follow[]    @relation("following")
+  followers     Follow[]    @relation("followers")
+  savedBlogs    SavedBlog[]
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
 
   @@unique([email])
   @@map("user")
@@ -84,16 +87,18 @@ model Verification {
 }
 
 model Blog {
-  id        String    @id @default(uuid())
-  title     String
-  category  String
-  content   String
-  image     String?
-  authorId  String
-  author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  comments  Comment[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id         String      @id @default(uuid())
+  title      String
+  category   String
+  content    String
+  image      String?
+  views      Int?        @default(0)
+  authorId   String
+  author     User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  comments   Comment[]
+  savedBlogs SavedBlog[]
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
 
   @@map("blog")
 }
@@ -109,4 +114,30 @@ model Comment {
   updatedAt DateTime @updatedAt
 
   @@map("comment")
+}
+
+model Follow {
+  id          String   @id @default(uuid())
+  followerId  String
+  follower    User     @relation("following", fields: [followerId], references: [id], onDelete: Cascade)
+  followingId String
+  following   User     @relation("followers", fields: [followingId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([followerId, followingId])
+  @@map("follow")
+}
+
+model SavedBlog {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  blogId    String
+  blog      Blog     @relation(fields: [blogId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, blogId])
+  @@map("saved_blog")
 }

@@ -5,6 +5,10 @@ import {
   getUserListService,
   updateProfileService,
   searchUserService,
+  getAllFollowersService,
+  getAllFollowingService,
+  followUserService,
+  unfollowUserService,
 } from "../services/user.service";
 import asyncHandler from "express-async-handler";
 import { successResponse } from "../utils/response";
@@ -104,6 +108,88 @@ export const searchUserController = asyncHandler(
       data: users,
       meta: metaData,
       message: "User search successfully",
+      statusCode: 200,
+    });
+  },
+);
+
+// follow user
+export const followUserController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const followerId = req.user.id as string;
+    const followingId = req.params.id as string;
+    const result = await followUserService({
+      followerId,
+      followingId,
+    });
+    successResponse({
+      res,
+      data: result,
+      message: "User followed successfully",
+      statusCode: 200,
+    });
+  },
+);
+
+// unfollow user
+export const unfollowUserController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const followerId = req.user.id as string;
+    const followingId = req.params.id as string;
+    const result = await unfollowUserService({
+      followerId,
+      followingId,
+    });
+    successResponse({
+      res,
+      data: result,
+      message: "User unfollowed successfully",
+      statusCode: 200,
+    });
+  },
+);
+
+// get all followers
+export const getAllFollowersController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const userId = req.params.id as string;
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 12;
+    const skip = (page - 1) * limit;
+    const { followers, metaData } = await getAllFollowersService({
+      userId,
+      page,
+      limit,
+      skip,
+    });
+    successResponse({
+      res,
+      data: followers,
+      meta: metaData,
+      message: "Followers fetched successfully",
+      statusCode: 200,
+    });
+  },
+);
+
+// get all following
+export const getAllFollowingController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const userId = req.params.id as string;
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 12;
+    const skip = (page - 1) * limit;
+    const { following, metaData } = await getAllFollowingService({
+      userId,
+      page,
+      limit,
+      skip,
+    });
+    successResponse({
+      res,
+      data: following,
+      meta: metaData,
+      message: "Following fetched successfully",
       statusCode: 200,
     });
   },

@@ -51,8 +51,28 @@ export const getAllBlogsService = async ({
 
 // get a single blog by id
 export const getBlogByIdService = async (id: string) => {
-  const blog = await prisma.blog.findUnique({
+  const isBlogExist = await prisma.blog.findUnique({
     where: { id },
+    include: {
+      author: {
+        select: {
+          name: true,
+          email: true,
+        },
+      },
+    },
+  });
+  if (!isBlogExist) {
+    throw createHttpError.NotFound("Blog Not Found.");
+  }
+  // increment view count
+  const blog = await prisma.blog.update({
+    where: { id },
+    data: {
+      views: {
+        increment: 1,
+      },
+    },
     include: {
       author: {
         select: {
@@ -204,4 +224,88 @@ export const searchBlogService = async ({
     limit,
   };
   return { blogs, metaData };
+};
+
+// save or unsave blog
+export const saveBlogService = async (blogId: string, userId: string) => {
+  const blog = await prisma.blog.findUnique({
+    where: { id: blogId },
+  });
+  if (!blog) {
+    throw createHttpError.NotFound("Blog Not Found.");
+  }
+  const isSavedBlog = await prisma.savedBlog.findUnique({
+    where: {
+      userId_blogId: {
+        userId,
+        blogId,
+      },
+    },
+  });
+  // if blog is already saved then unsave it
+  if (isSavedBlog) {
+    const unsavedBlog = await prisma.savedBlog.delete({
+      where: {
+        userId_blogId: {
+          userId,
+          blogId,
+        },
+      },
+    });
+    return unsavedBlog;
+  }
+  // save blog
+  const savedBlog = await prisma.savedBlog.create({
+    data: { blogId, userId },
+  });
+  return savedBlog;
+};
+
+// get all saved blogs
+export const getSavedBlogsService = async ({
+  page,
+  limit,
+  skip,
+  userId,
+}: {
+  page: number;
+  limit: number;
+  skip: number;
+  userId: string;
+}) => {
+  const savedBlogs = await prisma.savedBlog.findMany({
+    skip,
+    take: limit,
+    where: {
+      userId,
+    },
+    include: {
+      blog: {
+        include: {
+          author: {
+            select: {
+              name: true,
+              email: true,
+            },
+          },
+        },
+      },
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+  const totalSavedBlogs = await prisma.savedBlog.count({
+    where: {
+      userId,
+    },
+  });
+  const totalPages = Math.ceil(totalSavedBlogs / limit);
+  const metaData = {
+    totalSavedBlogs,
+    totalPages,
+    currentPage: page,
+    limit,
+  };
+  return { savedBlogs, metaData };
 };
