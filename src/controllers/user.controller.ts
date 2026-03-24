@@ -16,9 +16,10 @@ import { successResponse } from "../utils/response";
 // get user by id
 export const getUserByIdController = asyncHandler(
   async (req: Request, res: Response) => {
-    const userId = req.params.id as string;
+    const target_userId = req.params.userId as string;
+    const userId = req.user.id as string;
 
-    const user = await getUserByIdService(userId);
+    const user = await getUserByIdService({ target_userId, userId });
     successResponse({
       res,
       data: user,
@@ -31,7 +32,7 @@ export const getUserByIdController = asyncHandler(
 // get user's blogs with pagination
 export const getUserBlogsController = asyncHandler(
   async (req: Request, res: Response) => {
-    const userId = req.params.id as string;
+    const userId = req.params.userId as string;
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 12;
     const skip = (page - 1) * limit;
@@ -117,7 +118,7 @@ export const searchUserController = asyncHandler(
 export const followUserController = asyncHandler(
   async (req: Request, res: Response) => {
     const followerId = req.user.id as string;
-    const followingId = req.params.id as string;
+    const followingId = req.params.userId as string;
     const result = await followUserService({
       followerId,
       followingId,
@@ -135,7 +136,7 @@ export const followUserController = asyncHandler(
 export const unfollowUserController = asyncHandler(
   async (req: Request, res: Response) => {
     const followerId = req.user.id as string;
-    const followingId = req.params.id as string;
+    const followingId = req.params.userId as string;
     const result = await unfollowUserService({
       followerId,
       followingId,
@@ -152,7 +153,7 @@ export const unfollowUserController = asyncHandler(
 // get all followers
 export const getAllFollowersController = asyncHandler(
   async (req: Request, res: Response) => {
-    const userId = req.params.id as string;
+    const userId = req.params.userId as string;
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 12;
     const skip = (page - 1) * limit;
@@ -175,7 +176,7 @@ export const getAllFollowersController = asyncHandler(
 // get all following
 export const getAllFollowingController = asyncHandler(
   async (req: Request, res: Response) => {
-    const userId = req.params.id as string;
+    const userId = req.params.userId as string;
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 12;
     const skip = (page - 1) * limit;

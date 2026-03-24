@@ -30,9 +30,13 @@ app.use("/api/v1/users", userRouter);
 
 app.use(errorHandler);
 
-app.listen(port, () => {
-  console.log(`Better Auth app listening on port ${port}`);
-});
+app
+  .listen(port, () => {
+    console.log(`Better Auth app listening on port ${port}`);
+  })
+  .on("error", (error) => {
+    console.log(error);
+  });
 
 function errorHandler(
   err: any,
@@ -40,8 +44,9 @@ function errorHandler(
   res: Response,
   next: NextFunction,
 ) {
+  console.log(err);
   const statusCode = err.statusCode || 500;
-  const message = err.message || "Internal Server Error";
+  const message = err.expose ? err.message : "Internal Server Error";
   const stack = process.env.NODE_ENV === "development" ? err.stack : null;
-  res.status(statusCode).json({ error: message, stack });
+  res.status(statusCode).json({ success: false, message, stack });
 }

@@ -30,7 +30,8 @@ const router = Router();
 
 // get user by id route
 router.get(
-  "/details/:id",
+  "/details/:userId",
+  authMiddleware,
   getUserByIdValidator,
   validatedMiddleware,
   getUserByIdController,
@@ -38,7 +39,7 @@ router.get(
 
 // get user blogs route by user id
 router.get(
-  "/:id/blogs",
+  "/:userId/blogs",
   getUserBlogsValidator,
   validatedMiddleware,
   getUserBlogsController,
@@ -47,6 +48,7 @@ router.get(
 // get all users route
 router.get(
   "/",
+  authMiddleware,
   getUserListValidator,
   validatedMiddleware,
   getUserListController,

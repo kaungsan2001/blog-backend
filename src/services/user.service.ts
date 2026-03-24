@@ -2,9 +2,15 @@ import createHttpError from "http-errors";
 import { prisma } from "../db";
 
 // get user by id
-export const getUserByIdService = async (id: string) => {
-  const user = await prisma.user.findUnique({
-    where: { id },
+export const getUserByIdService = async ({
+  target_userId,
+  userId,
+}: {
+  target_userId: string;
+  userId: string;
+}) => {
+  const userData = await prisma.user.findUnique({
+    where: { id: target_userId },
     select: {
       id: true,
       name: true,
@@ -14,15 +20,27 @@ export const getUserByIdService = async (id: string) => {
       _count: {
         select: {
           blogs: true,
+          followers: true,
+          following: true,
         },
+      },
+      followers: {
+        where: { followerId: userId },
+        select: {
+          id: true,
+        },
+        take: 1,
       },
     },
   });
 
-  if (!user) {
+  if (!userData) {
     throw createHttpError.NotFound("User Not Found");
   }
 
+  // remove followers , only response isFollowing->boolean
+  const { followers, ...rest } = userData;
+  const user = { ...rest, isFollowing: !!followers.length };
   return user;
 };
 
@@ -193,6 +211,9 @@ export const followUserService = async ({
   followerId: string;
   followingId: string;
 }) => {
+  if (followerId === followingId) {
+    throw createHttpError.BadRequest("You cannot follow yourself");
+  }
   const user = await prisma.user.findUnique({
     where: { id: followingId },
   });
@@ -226,6 +247,9 @@ export const unfollowUserService = async ({
   followerId: string;
   followingId: string;
 }) => {
+  if (followerId === followingId) {
+    throw createHttpError.BadRequest("You cannot unfollow yourself");
+  }
   const user = await prisma.user.findUnique({
     where: { id: followingId },
   });

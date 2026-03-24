@@ -1,11 +1,11 @@
 import { body, param, query } from "express-validator";
 
 export const getUserByIdValidator = [
-  param("id").isString().withMessage("User ID must be a string"),
+  param("userId").isString().withMessage("User ID must be a string"),
 ];
 
 export const getUserBlogsValidator = [
-  param("id").isString().withMessage("User ID must be a string"),
+  param("userId").isString().withMessage("User ID must be a string"),
 ];
 
 export const getUserListValidator = [
