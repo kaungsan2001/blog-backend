@@ -5,7 +5,7 @@ import { prisma } from "../db";
 export const createBlogService = async (data: {
   title: string;
   content: string;
-  category: string;
+  categoryId: string;
   authorId: string;
 }) => {
   const blog = await prisma.blog.create({ data });
@@ -17,19 +17,42 @@ export const getAllBlogsService = async ({
   page,
   limit,
   skip,
+  userId,
+  categoryId,
 }: {
   page: number;
   limit: number;
   skip: number;
+  userId: string;
+  categoryId?: string;
 }) => {
-  const blogs = await prisma.blog.findMany({
+  const blogsData = await prisma.blog.findMany({
     skip,
     take: limit,
+    where: categoryId
+      ? {
+          categoryId,
+        }
+      : {},
     include: {
+      category: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
       author: {
         select: {
           name: true,
           email: true,
+        },
+      },
+      savedBy: {
+        where: {
+          userId,
+        },
+        select: {
+          userId: true,
         },
       },
     },
@@ -38,7 +61,18 @@ export const getAllBlogsService = async ({
     },
   });
 
-  const totalBlogs = await prisma.blog.count();
+  const blogs = blogsData.map((blog) => ({
+    ...blog,
+    isSaved: blog.savedBy.length > 0,
+  }));
+
+  const totalBlogs = await prisma.blog.count({
+    where: categoryId
+      ? {
+          categoryId,
+        }
+      : {},
+  });
   const totalPages = Math.ceil(totalBlogs / limit);
   const metaData = {
     totalBlogs,
@@ -58,6 +92,12 @@ export const getBlogByIdService = async (id: string) => {
         select: {
           name: true,
           email: true,
+        },
+      },
+      category: {
+        select: {
+          id: true,
+          name: true,
         },
       },
     },
@@ -90,13 +130,13 @@ export const updateBlogService = async ({
   id,
   title,
   content,
-  category,
+  categoryId,
   authorId,
 }: {
   id: string;
   title: string;
   content: string;
-  category: string;
+  categoryId: string;
   authorId: string;
 }) => {
   const blog = await prisma.blog.findUnique({
@@ -119,7 +159,7 @@ export const updateBlogService = async ({
     data: {
       title,
       content,
-      category,
+      categoryId,
     },
   });
   return updatedBlog;
@@ -176,11 +216,6 @@ export const searchBlogService = async ({
             mode: "insensitive",
           },
         },
-        {
-          category: {
-            contains: q,
-          },
-        },
       ],
     },
     include: {
@@ -188,6 +223,12 @@ export const searchBlogService = async ({
         select: {
           name: true,
           email: true,
+        },
+      },
+      category: {
+        select: {
+          id: true,
+          name: true,
         },
       },
     },
@@ -208,11 +249,6 @@ export const searchBlogService = async ({
             mode: "insensitive",
           },
         },
-        {
-          category: {
-            contains: q,
-          },
-        },
       ],
     },
   });
@@ -226,7 +262,7 @@ export const searchBlogService = async ({
   return { blogs, metaData };
 };
 
-// save or unsave blog
+// save blog
 export const saveBlogService = async (blogId: string, userId: string) => {
   const blog = await prisma.blog.findUnique({
     where: { id: blogId },
@@ -242,23 +278,47 @@ export const saveBlogService = async (blogId: string, userId: string) => {
       },
     },
   });
-  // if blog is already saved then unsave it
+  // if blog is already saved then throw error
   if (isSavedBlog) {
-    const unsavedBlog = await prisma.savedBlog.delete({
-      where: {
-        userId_blogId: {
-          userId,
-          blogId,
-        },
-      },
-    });
-    return unsavedBlog;
+    throw createHttpError.Conflict("Blog is already saved.");
   }
   // save blog
   const savedBlog = await prisma.savedBlog.create({
     data: { blogId, userId },
   });
   return savedBlog;
+};
+
+// unsave blog
+export const unsaveBlogService = async (blogId: string, userId: string) => {
+  const blog = await prisma.blog.findUnique({
+    where: { id: blogId },
+  });
+  if (!blog) {
+    throw createHttpError.NotFound("Blog Not Found.");
+  }
+  const isSavedBlog = await prisma.savedBlog.findUnique({
+    where: {
+      userId_blogId: {
+        userId,
+        blogId,
+      },
+    },
+  });
+  // if blog is not saved then throw error
+  if (!isSavedBlog) {
+    throw createHttpError.NotFound("Blog is not saved.");
+  }
+  // unsave blog
+  const unsavedBlog = await prisma.savedBlog.delete({
+    where: {
+      userId_blogId: {
+        userId,
+        blogId,
+      },
+    },
+  });
+  return unsavedBlog;
 };
 
 // get all saved blogs
@@ -288,6 +348,12 @@ export const getSavedBlogsService = async ({
               email: true,
             },
           },
+          category: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
         },
       },
     },
@@ -307,5 +373,9 @@ export const getSavedBlogsService = async ({
     currentPage: page,
     limit,
   };
-  return { savedBlogs, metaData };
+  const blogs = savedBlogs.map((savedBlog) => ({
+    ...savedBlog.blog,
+    isSaved: true,
+  }));
+  return { blogs, metaData };
 };

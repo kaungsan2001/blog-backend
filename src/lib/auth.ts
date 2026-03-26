@@ -13,5 +13,13 @@ export const auth = betterAuth({
     deleteUser: {
       enabled: true,
     },
+    additionalFields: {
+      role: {
+        type: ["user", "admin"],
+        required: false,
+        default: "user",
+        input: false,
+      },
+    },
   },
 });

@@ -9,6 +9,7 @@ import {
   searchBlogController,
   getSavedBlogsController,
   saveBlogController,
+  unsaveBlogController,
 } from "../../controllers/blog.controller";
 import { validatedMiddleware } from "../../middlewares/validated.middleware";
 import {
@@ -26,6 +27,7 @@ const router = Router();
 // get all blogs route
 router.get(
   "/",
+  authMiddleware,
   getAllBlogsValidator,
   validatedMiddleware,
   getAllBlogsController,
@@ -34,6 +36,7 @@ router.get(
 // get a single blog by id route
 router.get(
   "/details/:id",
+  authMiddleware,
   getBlogByIdValidator,
   validatedMiddleware,
   getBlogByIdController,
@@ -42,6 +45,7 @@ router.get(
 // search blogs route
 router.get(
   "/search",
+  authMiddleware,
   searchBlogValidator,
   validatedMiddleware,
   searchBlogController,
@@ -64,13 +68,22 @@ router.post(
   createBlogController,
 );
 
-// save or unsave blog route
+// save blog route
 router.post(
   "/save/:blogId",
   authMiddleware,
   saveBlogValidator,
   validatedMiddleware,
   saveBlogController,
+);
+
+// unsave blog route
+router.delete(
+  "/unsave/:blogId",
+  authMiddleware,
+  saveBlogValidator,
+  validatedMiddleware,
+  unsaveBlogController,
 );
 
 // update a blog route

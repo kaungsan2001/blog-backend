@@ -77,10 +77,12 @@ export const getUserListController = asyncHandler(
 export const updateProfileController = asyncHandler(
   async (req: Request, res: Response) => {
     const userId = req.user.id as string;
-    const { name } = req.body;
+    const { name, bio, address } = req.body;
     const updatedUser = await updateProfileService({
       id: userId,
       name,
+      bio,
+      address,
     });
     successResponse({
       res,

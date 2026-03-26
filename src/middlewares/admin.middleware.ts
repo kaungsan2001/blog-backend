@@ -15,7 +15,7 @@ declare module "express-serve-static-core" {
   }
 }
 
-const authMiddleware = asyncHandler(
+const adminMiddleware = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     const session = await auth.api.getSession({
       headers: fromNodeHeaders(req.headers),
@@ -24,8 +24,11 @@ const authMiddleware = asyncHandler(
       throw createHttpError(401, "Unauthorized");
     }
     req.user = session.user;
+    if (session.user.role !== "admin") {
+      throw createHttpError(403, "Forbidden");
+    }
     next();
   },
 );
 
-export default authMiddleware;
+export default adminMiddleware;

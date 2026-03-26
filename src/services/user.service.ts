@@ -15,6 +15,8 @@ export const getUserByIdService = async ({
       id: true,
       name: true,
       email: true,
+      bio: true,
+      address: true,
       createdAt: true,
       updatedAt: true,
       _count: {
@@ -62,6 +64,12 @@ export const getUserBlogsService = async ({
     where: { authorId: id },
     include: {
       author: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+      category: {
         select: {
           id: true,
           name: true,
@@ -128,9 +136,13 @@ export const getUserListService = async ({
 export const updateProfileService = async ({
   id,
   name,
+  bio,
+  address,
 }: {
   id: string;
   name: string;
+  bio: string;
+  address: string;
 }) => {
   const user = await prisma.user.findUnique({
     where: { id },
@@ -142,7 +154,7 @@ export const updateProfileService = async ({
 
   const updatedUser = await prisma.user.update({
     where: { id },
-    data: { name },
+    data: { name, bio, address },
   });
 
   return updatedUser;

@@ -12,18 +12,14 @@ datasource db {
   provider = "postgresql"
 }
 
-enum Role {
-  USER
-  ADMIN
-}
-
 model User {
   id            String      @id
   name          String
   email         String
+  bio           String?
+  address       String?
   emailVerified Boolean     @default(false)
   image         String?
-  role          Role        @default(USER)
   blogs         Blog[]
   comments      Comment[]
   sessions      Session[]
@@ -33,6 +29,7 @@ model User {
   savedBlogs    SavedBlog[]
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
+  role          String?     @default("user")
 
   @@unique([email])
   @@map("user")
@@ -89,18 +86,29 @@ model Verification {
 model Blog {
   id         String      @id @default(uuid())
   title      String
-  category   String
   content    String
   image      String?
   views      Int?        @default(0)
   authorId   String
   author     User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
   comments   Comment[]
-  savedBlogs SavedBlog[]
+  savedBy    SavedBlog[]
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
+  category   Category?   @relation(fields: [categoryId], references: [id])
+  categoryId String?
 
   @@map("blog")
+}
+
+model Category {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  blogs     Blog[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("category")
 }
 
 model Comment {

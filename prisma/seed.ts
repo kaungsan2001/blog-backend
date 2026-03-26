@@ -14,11 +14,17 @@ async function main() {
         },
       });
 
+      const category = await prisma.category.create({
+        data: {
+          name: faker.lorem.word(),
+        },
+      });
+
       const blogs = [];
       for (let j = 0; j < 10; j++) {
         blogs.push({
           title: faker.lorem.sentence(),
-          category: faker.lorem.word(),
+          categoryId: category.id,
           content: faker.lorem.paragraphs(15),
           authorId: user.user.id,
         });

@@ -8,6 +8,7 @@ import {
   searchBlogService,
   saveBlogService,
   getSavedBlogsService,
+  unsaveBlogService,
 } from "../services/blog.service";
 import { successResponse } from "../utils/response";
 import asyncHandler from "express-async-handler";
@@ -15,12 +16,12 @@ import asyncHandler from "express-async-handler";
 // create a new blog
 export const createBlogController = asyncHandler(
   async (req: Request, res: Response) => {
-    const { title, content, category } = req.body;
+    const { title, content, categoryId } = req.body;
     const userId = req.user.id;
     const blog = await createBlogService({
       title,
       content,
-      category,
+      categoryId,
       authorId: userId,
     });
 
@@ -36,6 +37,8 @@ export const createBlogController = asyncHandler(
 // get all blogs with pagination
 export const getAllBlogsController = asyncHandler(
   async (req: Request, res: Response) => {
+    const userId = req.user.id;
+    const categoryId = req.query.category as string;
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 12;
     const skip = (page - 1) * limit;
@@ -44,6 +47,8 @@ export const getAllBlogsController = asyncHandler(
       page,
       limit,
       skip,
+      userId,
+      categoryId,
     });
     successResponse({
       res,
@@ -73,12 +78,12 @@ export const getBlogByIdController = asyncHandler(
 export const updateBlogController = asyncHandler(
   async (req: Request, res: Response) => {
     const id = req.params.id as string;
-    const { title, content, category } = req.body;
+    const { title, content, categoryId } = req.body;
     const blog = await updateBlogService({
       id,
       title,
       content,
-      category,
+      categoryId,
       authorId: req.user.id,
     });
     successResponse({
@@ -128,7 +133,7 @@ export const searchBlogController = asyncHandler(
   },
 );
 
-// save or unsave blog
+// save blog
 export const saveBlogController = asyncHandler(
   async (req: Request, res: Response) => {
     const { blogId } = req.params;
@@ -142,13 +147,27 @@ export const saveBlogController = asyncHandler(
   },
 );
 
+// unsave blog
+export const unsaveBlogController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { blogId } = req.params;
+    const blog = await unsaveBlogService(blogId as string, req.user.id);
+    successResponse({
+      res,
+      data: blog,
+      message: "Blog Unsaved Successfully",
+      statusCode: 200,
+    });
+  },
+);
+
 // get all saved blogs
 export const getSavedBlogsController = asyncHandler(
   async (req: Request, res: Response) => {
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 12;
     const skip = (page - 1) * limit;
-    const { savedBlogs, metaData } = await getSavedBlogsService({
+    const { blogs, metaData } = await getSavedBlogsService({
       page,
       limit,
       skip,
@@ -156,7 +175,7 @@ export const getSavedBlogsController = asyncHandler(
     });
     successResponse({
       res,
-      data: savedBlogs,
+      data: blogs,
       message: "Saved Blogs Fetched Successfully",
       statusCode: 200,
       meta: metaData,
