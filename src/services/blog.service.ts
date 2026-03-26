@@ -87,20 +87,6 @@ export const getAllBlogsService = async ({
 export const getBlogByIdService = async (id: string) => {
   const isBlogExist = await prisma.blog.findUnique({
     where: { id },
-    include: {
-      author: {
-        select: {
-          name: true,
-          email: true,
-        },
-      },
-      category: {
-        select: {
-          id: true,
-          name: true,
-        },
-      },
-    },
   });
   if (!isBlogExist) {
     throw createHttpError.NotFound("Blog Not Found.");
@@ -120,9 +106,65 @@ export const getBlogByIdService = async (id: string) => {
           email: true,
         },
       },
+      category: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
     },
   });
   return blog;
+};
+
+// get user's blogs
+export const getUserBlogsService = async ({
+  id,
+  page,
+  limit,
+  skip,
+}: {
+  id: string;
+  page: number;
+  limit: number;
+  skip: number;
+}) => {
+  const blogs = await prisma.blog.findMany({
+    skip,
+    take: limit,
+    where: { authorId: id },
+    include: {
+      author: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+      category: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
+  const totalBlogs = await prisma.blog.count({
+    where: { authorId: id },
+  });
+
+  const totalPages = Math.ceil(totalBlogs / limit);
+  const metaData = {
+    totalBlogs,
+    totalPages,
+    currentPage: page,
+    limit,
+  };
+
+  return { blogs, metaData };
 };
 
 // update a blog

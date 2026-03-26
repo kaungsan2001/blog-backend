@@ -9,6 +9,7 @@ import {
   saveBlogService,
   getSavedBlogsService,
   unsaveBlogService,
+  getUserBlogsService,
 } from "../services/blog.service";
 import { successResponse } from "../utils/response";
 import asyncHandler from "express-async-handler";
@@ -69,6 +70,29 @@ export const getBlogByIdController = asyncHandler(
       res,
       data: blog,
       message: "Blog Fetched Successfully",
+      statusCode: 200,
+    });
+  },
+);
+
+// get user's blogs with pagination
+export const getUserBlogsController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const userId = req.params.userId as string;
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 12;
+    const skip = (page - 1) * limit;
+    const { blogs, metaData } = await getUserBlogsService({
+      id: userId,
+      page,
+      limit,
+      skip,
+    });
+    successResponse({
+      res,
+      data: blogs,
+      meta: metaData,
+      message: "User blogs fetched successfully",
       statusCode: 200,
     });
   },

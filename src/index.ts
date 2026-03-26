@@ -10,6 +10,7 @@ import blogRouter from "./routes/v1/blog.route";
 import commentRouter from "./routes/v1/comment.route";
 import userRouter from "./routes/v1/user.route";
 import categoryRouter from "./routes/v1/category.route";
+import redis_client from "./lib/redis";
 
 const app = express();
 const port = 8000;
@@ -39,6 +40,14 @@ app
   .on("error", (error) => {
     console.log(error);
   });
+
+redis_client.on("error", (err) => console.log("Redis Client Error", err));
+
+await redis_client.connect();
+
+await redis_client.set("foo", "bar");
+const result = await redis_client.get("foo");
+console.log(result); // >>> bar
 
 function errorHandler(
   err: any,

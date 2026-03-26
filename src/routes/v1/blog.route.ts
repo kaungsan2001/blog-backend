@@ -10,6 +10,7 @@ import {
   getSavedBlogsController,
   saveBlogController,
   unsaveBlogController,
+  getUserBlogsController,
 } from "../../controllers/blog.controller";
 import { validatedMiddleware } from "../../middlewares/validated.middleware";
 import {
@@ -20,6 +21,7 @@ import {
   getAllBlogsValidator,
   searchBlogValidator,
   saveBlogValidator,
+  getUserBlogsValidator,
 } from "../../validators/blog.validator";
 
 const router = Router();
@@ -40,6 +42,14 @@ router.get(
   getBlogByIdValidator,
   validatedMiddleware,
   getBlogByIdController,
+);
+
+// get user blogs route by user id
+router.get(
+  "/user/:userId",
+  getUserBlogsValidator,
+  validatedMiddleware,
+  getUserBlogsController,
 );
 
 // search blogs route

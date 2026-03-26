@@ -4,10 +4,6 @@ export const getUserByIdValidator = [
   param("userId").isString().withMessage("User ID must be a string"),
 ];
 
-export const getUserBlogsValidator = [
-  param("userId").isString().withMessage("User ID must be a string"),
-];
-
 export const getUserListValidator = [
   query("page")
     .optional()

@@ -46,53 +46,6 @@ export const getUserByIdService = async ({
   return user;
 };
 
-// get user's blogs
-export const getUserBlogsService = async ({
-  id,
-  page,
-  limit,
-  skip,
-}: {
-  id: string;
-  page: number;
-  limit: number;
-  skip: number;
-}) => {
-  const blogs = await prisma.blog.findMany({
-    skip,
-    take: limit,
-    where: { authorId: id },
-    include: {
-      author: {
-        select: {
-          id: true,
-          name: true,
-        },
-      },
-      category: {
-        select: {
-          id: true,
-          name: true,
-        },
-      },
-    },
-  });
-
-  const totalBlogs = await prisma.blog.count({
-    where: { authorId: id },
-  });
-
-  const totalPages = Math.ceil(totalBlogs / limit);
-  const metaData = {
-    totalBlogs,
-    totalPages,
-    currentPage: page,
-    limit,
-  };
-
-  return { blogs, metaData };
-};
-
 // get all users
 export const getUserListService = async ({
   page,
@@ -313,8 +266,6 @@ export const getAllFollowersService = async ({
           email: true,
           createdAt: true,
           updatedAt: true,
-        },
-        include: {
           _count: {
             select: {
               blogs: true,
@@ -336,8 +287,9 @@ export const getAllFollowersService = async ({
     currentPage: page,
     limit,
   };
+  const users = followers.map((f) => f.follower);
 
-  return { followers, metaData };
+  return { users, metaData };
 };
 
 // get all following
@@ -364,8 +316,6 @@ export const getAllFollowingService = async ({
           email: true,
           createdAt: true,
           updatedAt: true,
-        },
-        include: {
           _count: {
             select: {
               blogs: true,
@@ -388,5 +338,7 @@ export const getAllFollowingService = async ({
     limit,
   };
 
-  return { following, metaData };
+  const users = following.map((f) => f.following);
+
+  return { users, metaData };
 };

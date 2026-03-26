@@ -3,7 +3,7 @@ import { body, param, query } from "express-validator";
 export const createBlogValidator = [
   body("title").notEmpty().withMessage("Title is required"),
   body("content").notEmpty().withMessage("Content is required"),
-  body("category").notEmpty().withMessage("Category is required"),
+  body("categoryId").notEmpty().withMessage("Category Id is required"),
   body("image").optional(),
 ];
 
@@ -11,7 +11,7 @@ export const updateBlogValidator = [
   param("id").notEmpty().withMessage("Id is required"),
   body("title").notEmpty().withMessage("Title is required"),
   body("content").notEmpty().withMessage("Content is required"),
-  body("category").notEmpty().withMessage("Category is required"),
+  body("categoryId").notEmpty().withMessage("Category Id is required"),
   body("image").optional(),
 ];
 
@@ -21,6 +21,10 @@ export const deleteBlogValidator = [
 
 export const getBlogByIdValidator = [
   param("id").notEmpty().withMessage("Id is required"),
+];
+
+export const getUserBlogsValidator = [
+  param("userId").isString().withMessage("User ID must be a string"),
 ];
 
 export const getAllBlogsValidator = [
@@ -37,17 +41,5 @@ export const saveBlogValidator = [
 ];
 
 export const followUserValidator = [
-  param("userId").notEmpty().withMessage("User Id is required"),
-];
-
-export const unfollowUserValidator = [
-  param("userId").notEmpty().withMessage("User Id is required"),
-];
-
-export const getAllFollowersValidator = [
-  param("userId").notEmpty().withMessage("User Id is required"),
-];
-
-export const getAllFollowingValidator = [
   param("userId").notEmpty().withMessage("User Id is required"),
 ];

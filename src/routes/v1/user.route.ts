@@ -1,7 +1,6 @@
 import { Router } from "express";
 import {
   getUserByIdController,
-  getUserBlogsController,
   getUserListController,
   searchUserController,
   unfollowUserController,
@@ -12,19 +11,13 @@ import {
 import { validatedMiddleware } from "../../middlewares/validated.middleware";
 import {
   getUserByIdValidator,
-  getUserBlogsValidator,
   getUserListValidator,
   updateProfileValidator,
   searchUserValidator,
 } from "../../validators/user.validator";
 import { updateProfileController } from "../../controllers/user.controller";
 import authMiddleware from "../../middlewares/auth.middleware";
-import {
-  followUserValidator,
-  getAllFollowersValidator,
-  getAllFollowingValidator,
-  unfollowUserValidator,
-} from "../../validators/blog.validator";
+import { followUserValidator } from "../../validators/blog.validator";
 
 const router = Router();
 
@@ -35,14 +28,6 @@ router.get(
   getUserByIdValidator,
   validatedMiddleware,
   getUserByIdController,
-);
-
-// get user blogs route by user id
-router.get(
-  "/:userId/blogs",
-  getUserBlogsValidator,
-  validatedMiddleware,
-  getUserBlogsController,
 );
 
 // get all users route
@@ -63,20 +48,10 @@ router.get(
 );
 
 // get all followers route
-router.get(
-  "/:userId/followers",
-  getAllFollowersValidator,
-  validatedMiddleware,
-  getAllFollowersController,
-);
+router.get("/followers", authMiddleware, getAllFollowersController);
 
 // get all following route
-router.get(
-  "/:userId/following",
-  getAllFollowingValidator,
-  validatedMiddleware,
-  getAllFollowingController,
-);
+router.get("/following", authMiddleware, getAllFollowingController);
 
 // follow user route
 router.post(
@@ -91,7 +66,7 @@ router.post(
 router.delete(
   "/unfollow/:userId",
   authMiddleware,
-  unfollowUserValidator,
+  followUserValidator,
   validatedMiddleware,
   unfollowUserController,
 );
