@@ -17,14 +17,16 @@ import asyncHandler from "express-async-handler";
 // create a new blog
 export const createBlogController = asyncHandler(
   async (req: Request, res: Response) => {
+    const imageBuffer = req.file?.buffer;
     const { title, content, categoryId, isPublished } = req.body;
     const userId = req.user.id;
     const blog = await createBlogService({
+      imageBuffer,
       title,
       content,
       categoryId,
       authorId: userId,
-      isPublished,
+      isPublished: isPublished === "true" ? true : false,
     });
 
     successResponse({
@@ -66,7 +68,7 @@ export const getAllBlogsController = asyncHandler(
 export const getBlogByIdController = asyncHandler(
   async (req: Request, res: Response) => {
     const { id } = req.params;
-    const blog = await getBlogByIdService(id as string);
+    const blog = await getBlogByIdService(id as string, req.user.id);
     successResponse({
       res,
       data: blog,
@@ -79,6 +81,9 @@ export const getBlogByIdController = asyncHandler(
 // get user's blogs with pagination
 export const getUserBlogsController = asyncHandler(
   async (req: Request, res: Response) => {
+    const isPublished = req.query.isPublished as string;
+    const isPublishedBoolean =
+      isPublished.toLowerCase() === "true" ? true : false;
     const authUserId = req.user.id;
     const authorId = req.params.userId as string;
     const page = Number(req.query.page) || 1;
@@ -90,6 +95,7 @@ export const getUserBlogsController = asyncHandler(
       page,
       limit,
       skip,
+      isPublished: isPublishedBoolean,
     });
     successResponse({
       res,

@@ -2,22 +2,68 @@ import createHttpError from "http-errors";
 import { prisma } from "../db";
 import redis_client from "../lib/redis";
 import { deleteCache } from "../utils/deleteCache";
+import { v2 as cloudinary, type UploadApiResponse } from "cloudinary";
 
 // create new blog
-export const createBlogService = async (data: {
+export const createBlogService = async ({
+  imageBuffer,
+  title,
+  content,
+  categoryId,
+  authorId,
+  isPublished,
+}: {
+  imageBuffer?: Buffer;
   title: string;
   content: string;
   categoryId: string;
   authorId: string;
   isPublished: boolean;
 }) => {
-  const blog = await prisma.blog.create({ data });
+  let uploadResult;
+  if (imageBuffer) {
+    uploadResult = await new Promise<UploadApiResponse>((resolve, reject) => {
+      cloudinary.uploader
+        .upload_stream(
+          {
+            folder: "blogs",
+            resource_type: "image",
+          },
+          (error, result) => {
+            if (error) {
+              reject(error);
+            } else if (result) {
+              resolve(result);
+            } else {
+              reject(
+                createHttpError.InternalServerError("Failed to upload image"),
+              );
+            }
+          },
+        )
+        .end(imageBuffer);
+    });
+    if (!uploadResult.secure_url) {
+      throw createHttpError.InternalServerError("Failed to upload image");
+    }
+  }
+
+  const blog = await prisma.blog.create({
+    data: {
+      title,
+      content,
+      categoryId,
+      authorId,
+      isPublished,
+      image: uploadResult?.secure_url,
+    },
+  });
 
   // delete all blogs cache
   deleteCache("blogs:*");
 
   // delete user's blogs cache
-  deleteCache(`user-blogs:${data.authorId}:*`);
+  deleteCache(`user-blogs:${authorId}:*`);
 
   // delete categories cache because the blog count of categories will be changed
   deleteCache("categories");
@@ -52,7 +98,7 @@ export const getAllBlogsService = async ({
     take: limit,
     where: {
       isPublished: true,
-      ...(categoryId && { categoryId }),
+      ...(categoryId && { categoryId }), // if categoryId is provided then filter by categoryId
     },
     include: {
       category: {
@@ -108,7 +154,7 @@ export const getAllBlogsService = async ({
 };
 
 // get a single blog by id
-export const getBlogByIdService = async (id: string) => {
+export const getBlogByIdService = async (id: string, userId: string) => {
   const blog = await prisma.blog.findUnique({
     where: { id },
     include: {
@@ -129,6 +175,13 @@ export const getBlogByIdService = async (id: string) => {
   if (!blog) {
     throw createHttpError.NotFound("Blog Not Found.");
   }
+  // blog owner  -> blog -> published or draft
+  // other users -> blog -> published
+  if (blog.authorId !== userId && !blog.isPublished) {
+    throw createHttpError.Unauthorized(
+      "You are not authorized to view this blog",
+    );
+  }
   return blog;
 };
 
@@ -139,14 +192,16 @@ export const getUserBlogsService = async ({
   page,
   limit,
   skip,
+  isPublished,
 }: {
   authorId: string;
   authUserId: string;
   page: number;
   limit: number;
   skip: number;
+  isPublished: boolean;
 }) => {
-  const cacheKey = `user-blogs:${authorId}:${page}:${limit}`;
+  const cacheKey = `user-blogs:${authorId}:${page}:${limit}:${isPublished}`;
   const cachedBlogs = await redis_client.get(cacheKey);
   if (cachedBlogs) {
     return JSON.parse(cachedBlogs);
@@ -156,7 +211,9 @@ export const getUserBlogsService = async ({
     take: limit,
     where: {
       authorId,
-      ...(authUserId !== authorId && { isPublished: true }),
+      ...(authUserId !== authorId ? { isPublished: true } : { isPublished }),
+      // if request user is not owner of the blog then only published blogs will be returned
+      // if request user is owner of the blog then allow to filter by isPublished=true or false
     },
     include: {
       author: {
@@ -180,7 +237,7 @@ export const getUserBlogsService = async ({
   const totalBlogs = await prisma.blog.count({
     where: {
       authorId,
-      ...(authUserId !== authorId && { isPublished: true }),
+      ...(authUserId !== authorId && { isPublished }),
     },
   });
 
@@ -223,6 +280,7 @@ export const updateBlogService = async ({
   if (!blog) {
     throw createHttpError.NotFound("Blog Not Found.");
   }
+  // only owner can update the blog
   if (blog.authorId !== authorId) {
     throw createHttpError.Unauthorized(
       "You are not authorized to update this blog",
@@ -242,7 +300,7 @@ export const updateBlogService = async ({
 
   // delete all blogs cache
   deleteCache("blogs:*");
-
+  deleteCache(`user-blogs:${authorId}:*`);
   deleteCache("categories");
 
   return updatedBlog;
@@ -258,6 +316,7 @@ export const deleteBlogService = async (id: string, userId: string) => {
     throw createHttpError.NotFound("Blog Not Found.");
   }
 
+  // only owner can delete the blog
   if (blog.authorId !== userId) {
     throw createHttpError.Unauthorized(
       "You are not authorized to delete this blog",
@@ -365,6 +424,8 @@ export const saveBlogService = async (blogId: string, userId: string) => {
   if (!blog) {
     throw createHttpError.NotFound("Blog Not Found.");
   }
+  // blog owner can save both published and draft blogs
+  // other users can save only published blogs
   if (!blog.isPublished && blog.authorId !== userId) {
     throw createHttpError.Unauthorized(
       "You are not authorized to save this blog",
@@ -440,6 +501,8 @@ export const getSavedBlogsService = async ({
       userId,
       blog: {
         OR: [{ isPublished: true }, { authorId: userId }],
+        // if blog is published then return
+        // if blog is draft then return only if authorId is equal to userId
       },
     },
     include: {

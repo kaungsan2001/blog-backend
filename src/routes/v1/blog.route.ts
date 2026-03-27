@@ -23,6 +23,7 @@ import {
   saveBlogValidator,
   getUserBlogsValidator,
 } from "../../validators/blog.validator";
+import upload from "../../middlewares/upload.middleware";
 
 const router = Router();
 
@@ -74,8 +75,10 @@ router.get(
 router.post(
   "/create",
   authMiddleware,
+  upload.single("image"),
   createBlogValidator,
   validatedMiddleware,
+
   createBlogController,
 );
 

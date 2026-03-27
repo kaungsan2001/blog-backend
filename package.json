@@ -19,13 +19,16 @@
     "@prisma/client": "^7.5.0",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
+    "@types/multer": "^2.1.0",
     "better-auth": "^1.5.5",
+    "cloudinary": "^2.9.0",
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
     "express-async-handler": "^1.2.0",
     "express-validator": "^7.3.1",
     "http-errors": "^2.0.1",
+    "multer": "^2.1.1",
     "prisma": "^7.5.0",
     "redis": "^5.11.0"
   }

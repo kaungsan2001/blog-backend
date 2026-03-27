@@ -10,6 +10,7 @@ export const validatedMiddleware = (
 ) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
+    console.log(errors.array());
     throw createHttpError.BadRequest("Invalid Input");
   }
   next();
