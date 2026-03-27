@@ -1,5 +1,7 @@
 import createHttpError from "http-errors";
 import { prisma } from "../db";
+import redis_client from "../lib/redis";
+import { deleteCache } from "../utils/deleteCache";
 
 // create new blog
 export const createBlogService = async (data: {
@@ -9,6 +11,16 @@ export const createBlogService = async (data: {
   authorId: string;
 }) => {
   const blog = await prisma.blog.create({ data });
+
+  // delete all blogs cache
+  deleteCache("blogs:*");
+
+  // delete user's blogs cache
+  deleteCache(`user-blogs:${data.authorId}:*`);
+
+  // delete categories cache because the blog count of categories will be changed
+  deleteCache("categories");
+
   return blog;
 };
 
@@ -26,6 +38,14 @@ export const getAllBlogsService = async ({
   userId: string;
   categoryId?: string;
 }) => {
+  const cacheKey = `blogs:${page}:${limit}:${categoryId || ""}`;
+  const cachedBlogs = await redis_client.get(cacheKey);
+
+  // check blog cache is exist or not , if exist then return cached blogs
+  if (cachedBlogs) {
+    return JSON.parse(cachedBlogs);
+  }
+
   const blogsData = await prisma.blog.findMany({
     skip,
     take: limit,
@@ -80,25 +100,18 @@ export const getAllBlogsService = async ({
     currentPage: page,
     limit,
   };
+  // set blog cache in redis
+  await redis_client.set(cacheKey, JSON.stringify({ blogs, metaData }), {
+    EX: 60 * 60 * 24, // 24 hours
+  });
+
   return { blogs, metaData };
 };
 
 // get a single blog by id
 export const getBlogByIdService = async (id: string) => {
-  const isBlogExist = await prisma.blog.findUnique({
+  const blog = await prisma.blog.findUnique({
     where: { id },
-  });
-  if (!isBlogExist) {
-    throw createHttpError.NotFound("Blog Not Found.");
-  }
-  // increment view count
-  const blog = await prisma.blog.update({
-    where: { id },
-    data: {
-      views: {
-        increment: 1,
-      },
-    },
     include: {
       author: {
         select: {
@@ -114,6 +127,9 @@ export const getBlogByIdService = async (id: string) => {
       },
     },
   });
+  if (!blog) {
+    throw createHttpError.NotFound("Blog Not Found.");
+  }
   return blog;
 };
 
@@ -129,6 +145,11 @@ export const getUserBlogsService = async ({
   limit: number;
   skip: number;
 }) => {
+  const cacheKey = `user-blogs:${id}:${page}:${limit}`;
+  const cachedBlogs = await redis_client.get(cacheKey);
+  if (cachedBlogs) {
+    return JSON.parse(cachedBlogs);
+  }
   const blogs = await prisma.blog.findMany({
     skip,
     take: limit,
@@ -164,6 +185,10 @@ export const getUserBlogsService = async ({
     limit,
   };
 
+  // set blog cache in redis
+  await redis_client.set(cacheKey, JSON.stringify({ blogs, metaData }), {
+    EX: 30 * 60, // 30 minutes
+  });
   return { blogs, metaData };
 };
 
@@ -204,6 +229,10 @@ export const updateBlogService = async ({
       categoryId,
     },
   });
+
+  // delete all blogs cache
+  deleteCache("blogs:*");
+
   return updatedBlog;
 };
 
@@ -225,6 +254,12 @@ export const deleteBlogService = async (id: string, userId: string) => {
   const deletedBlog = await prisma.blog.delete({
     where: { id },
   });
+
+  // delete all blogs cache
+  deleteCache("blogs:*");
+
+  // delete categories cache because the blog count of categories will be changed
+  deleteCache("categories");
 
   return deletedBlog;
 };

@@ -1,8 +1,15 @@
 import { prisma } from "../db";
 import createHttpError from "http-errors";
+import redis_client from "../lib/redis";
+import { deleteCache } from "../utils/deleteCache";
 
 export const getAllCategories = async () => {
-  return await prisma.category.findMany({
+  const cacheKey = "categories";
+  const cachedCategories = await redis_client.get(cacheKey);
+  if (cachedCategories) {
+    return JSON.parse(cachedCategories);
+  }
+  const categories = await prisma.category.findMany({
     include: {
       _count: {
         select: {
@@ -16,6 +23,10 @@ export const getAllCategories = async () => {
       },
     },
   });
+  await redis_client.set(cacheKey, JSON.stringify(categories), {
+    EX: 60 * 60 * 24,
+  });
+  return categories;
 };
 
 export const createCategory = async (name: string) => {
@@ -23,7 +34,9 @@ export const createCategory = async (name: string) => {
   if (category) {
     throw createHttpError.Conflict("Category already exists");
   }
-  return await prisma.category.create({ data: { name } });
+  const categories = await prisma.category.create({ data: { name } });
+  deleteCache("categories");
+  return categories;
 };
 
 export const updateCategory = async (id: string, name: string) => {
@@ -31,7 +44,12 @@ export const updateCategory = async (id: string, name: string) => {
   if (!category) {
     throw createHttpError.NotFound("Category not found");
   }
-  return await prisma.category.update({ where: { id }, data: { name } });
+  const updatedCategory = await prisma.category.update({
+    where: { id },
+    data: { name },
+  });
+  deleteCache("categories");
+  return updatedCategory;
 };
 
 export const deleteCategory = async (id: string) => {
@@ -39,5 +57,7 @@ export const deleteCategory = async (id: string) => {
   if (!category) {
     throw createHttpError.NotFound("Category not found");
   }
-  return await prisma.category.delete({ where: { id } });
+  const deletedCategory = await prisma.category.delete({ where: { id } });
+  deleteCache("categories");
+  return deletedCategory;
 };

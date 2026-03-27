@@ -48,10 +48,12 @@ export const getUserByIdService = async ({
 
 // get all users
 export const getUserListService = async ({
+  userId,
   page,
   limit,
   skip,
 }: {
+  userId: string;
   page: number;
   limit: number;
   skip: number;
@@ -59,6 +61,11 @@ export const getUserListService = async ({
   const users = await prisma.user.findMany({
     skip,
     take: limit,
+    where: {
+      id: {
+        not: userId,
+      },
+    },
     select: {
       id: true,
       name: true,
@@ -73,7 +80,13 @@ export const getUserListService = async ({
     },
   });
 
-  const totalUsers = await prisma.user.count();
+  const totalUsers = await prisma.user.count({
+    where: {
+      id: {
+        not: userId,
+      },
+    },
+  });
   const totalPages = Math.ceil(totalUsers / limit);
   const metaData = {
     totalUsers,

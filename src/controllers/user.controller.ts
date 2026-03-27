@@ -31,10 +31,12 @@ export const getUserByIdController = asyncHandler(
 // get all users with pagination
 export const getUserListController = asyncHandler(
   async (req: Request, res: Response) => {
+    const userId = req.user.id as string;
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 12;
     const skip = (page - 1) * limit;
     const { users, metaData } = await getUserListService({
+      userId,
       page,
       limit,
       skip,
