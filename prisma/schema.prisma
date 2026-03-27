@@ -84,18 +84,19 @@ model Verification {
 }
 
 model Blog {
-  id         String      @id @default(uuid())
-  title      String
-  content    String
-  image      String?
-  authorId   String
-  author     User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  comments   Comment[]
-  savedBy    SavedBlog[]
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
-  category   Category?   @relation(fields: [categoryId], references: [id])
-  categoryId String?
+  id          String      @id @default(uuid())
+  title       String
+  content     String
+  image       String?
+  authorId    String
+  isPublished Boolean     @default(false)
+  author      User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  comments    Comment[]
+  savedBy     SavedBlog[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  category    Category?   @relation(fields: [categoryId], references: [id])
+  categoryId  String?
 
   @@map("blog")
 }

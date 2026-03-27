@@ -47,6 +47,7 @@ router.get(
 // get user blogs route by user id
 router.get(
   "/user/:userId",
+  authMiddleware,
   getUserBlogsValidator,
   validatedMiddleware,
   getUserBlogsController,

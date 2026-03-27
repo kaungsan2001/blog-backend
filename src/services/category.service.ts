@@ -13,7 +13,11 @@ export const getAllCategories = async () => {
     include: {
       _count: {
         select: {
-          blogs: true,
+          blogs: {
+            where: {
+              isPublished: true,
+            },
+          },
         },
       },
     },

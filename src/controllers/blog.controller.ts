@@ -17,13 +17,14 @@ import asyncHandler from "express-async-handler";
 // create a new blog
 export const createBlogController = asyncHandler(
   async (req: Request, res: Response) => {
-    const { title, content, categoryId } = req.body;
+    const { title, content, categoryId, isPublished } = req.body;
     const userId = req.user.id;
     const blog = await createBlogService({
       title,
       content,
       categoryId,
       authorId: userId,
+      isPublished,
     });
 
     successResponse({
@@ -78,12 +79,14 @@ export const getBlogByIdController = asyncHandler(
 // get user's blogs with pagination
 export const getUserBlogsController = asyncHandler(
   async (req: Request, res: Response) => {
-    const userId = req.params.userId as string;
+    const authUserId = req.user.id;
+    const authorId = req.params.userId as string;
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 12;
     const skip = (page - 1) * limit;
     const { blogs, metaData } = await getUserBlogsService({
-      id: userId,
+      authorId,
+      authUserId,
       page,
       limit,
       skip,
@@ -102,12 +105,13 @@ export const getUserBlogsController = asyncHandler(
 export const updateBlogController = asyncHandler(
   async (req: Request, res: Response) => {
     const id = req.params.id as string;
-    const { title, content, categoryId } = req.body;
+    const { title, content, categoryId, isPublished } = req.body;
     const blog = await updateBlogService({
       id,
       title,
       content,
       categoryId,
+      isPublished,
       authorId: req.user.id,
     });
     successResponse({

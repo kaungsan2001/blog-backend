@@ -9,6 +9,7 @@ export const createBlogService = async (data: {
   content: string;
   categoryId: string;
   authorId: string;
+  isPublished: boolean;
 }) => {
   const blog = await prisma.blog.create({ data });
 
@@ -49,11 +50,10 @@ export const getAllBlogsService = async ({
   const blogsData = await prisma.blog.findMany({
     skip,
     take: limit,
-    where: categoryId
-      ? {
-          categoryId,
-        }
-      : {},
+    where: {
+      isPublished: true,
+      ...(categoryId && { categoryId }),
+    },
     include: {
       category: {
         select: {
@@ -87,11 +87,10 @@ export const getAllBlogsService = async ({
   }));
 
   const totalBlogs = await prisma.blog.count({
-    where: categoryId
-      ? {
-          categoryId,
-        }
-      : {},
+    where: {
+      isPublished: true,
+      ...(categoryId && { categoryId }),
+    },
   });
   const totalPages = Math.ceil(totalBlogs / limit);
   const metaData = {
@@ -135,17 +134,19 @@ export const getBlogByIdService = async (id: string) => {
 
 // get user's blogs
 export const getUserBlogsService = async ({
-  id,
+  authorId,
+  authUserId,
   page,
   limit,
   skip,
 }: {
-  id: string;
+  authorId: string;
+  authUserId: string;
   page: number;
   limit: number;
   skip: number;
 }) => {
-  const cacheKey = `user-blogs:${id}:${page}:${limit}`;
+  const cacheKey = `user-blogs:${authorId}:${page}:${limit}`;
   const cachedBlogs = await redis_client.get(cacheKey);
   if (cachedBlogs) {
     return JSON.parse(cachedBlogs);
@@ -153,7 +154,10 @@ export const getUserBlogsService = async ({
   const blogs = await prisma.blog.findMany({
     skip,
     take: limit,
-    where: { authorId: id },
+    where: {
+      authorId,
+      ...(authUserId !== authorId && { isPublished: true }),
+    },
     include: {
       author: {
         select: {
@@ -174,7 +178,10 @@ export const getUserBlogsService = async ({
   });
 
   const totalBlogs = await prisma.blog.count({
-    where: { authorId: id },
+    where: {
+      authorId,
+      ...(authUserId !== authorId && { isPublished: true }),
+    },
   });
 
   const totalPages = Math.ceil(totalBlogs / limit);
@@ -199,12 +206,14 @@ export const updateBlogService = async ({
   content,
   categoryId,
   authorId,
+  isPublished,
 }: {
   id: string;
   title: string;
   content: string;
   categoryId: string;
   authorId: string;
+  isPublished: boolean;
 }) => {
   const blog = await prisma.blog.findUnique({
     where: {
@@ -227,11 +236,14 @@ export const updateBlogService = async ({
       title,
       content,
       categoryId,
+      isPublished,
     },
   });
 
   // delete all blogs cache
   deleteCache("blogs:*");
+
+  deleteCache("categories");
 
   return updatedBlog;
 };
@@ -280,6 +292,7 @@ export const searchBlogService = async ({
     skip,
     take: limit,
     where: {
+      isPublished: true,
       OR: [
         {
           title: {
@@ -313,6 +326,7 @@ export const searchBlogService = async ({
 
   const totalBlogs = await prisma.blog.count({
     where: {
+      isPublished: true,
       OR: [
         {
           title: {
@@ -343,9 +357,18 @@ export const searchBlogService = async ({
 export const saveBlogService = async (blogId: string, userId: string) => {
   const blog = await prisma.blog.findUnique({
     where: { id: blogId },
+    select: {
+      isPublished: true,
+      authorId: true,
+    },
   });
   if (!blog) {
     throw createHttpError.NotFound("Blog Not Found.");
+  }
+  if (!blog.isPublished && blog.authorId !== userId) {
+    throw createHttpError.Unauthorized(
+      "You are not authorized to save this blog",
+    );
   }
   const isSavedBlog = await prisma.savedBlog.findUnique({
     where: {
@@ -415,6 +438,9 @@ export const getSavedBlogsService = async ({
     take: limit,
     where: {
       userId,
+      blog: {
+        OR: [{ isPublished: true }, { authorId: userId }],
+      },
     },
     include: {
       blog: {
@@ -441,6 +467,9 @@ export const getSavedBlogsService = async ({
   const totalSavedBlogs = await prisma.savedBlog.count({
     where: {
       userId,
+      blog: {
+        OR: [{ isPublished: true }, { authorId: userId }],
+      },
     },
   });
   const totalPages = Math.ceil(totalSavedBlogs / limit);
