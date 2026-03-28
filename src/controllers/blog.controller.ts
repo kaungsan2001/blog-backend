@@ -110,14 +110,16 @@ export const getUserBlogsController = asyncHandler(
 // update a blog
 export const updateBlogController = asyncHandler(
   async (req: Request, res: Response) => {
+    const imageBuffer = req.file?.buffer;
     const id = req.params.id as string;
     const { title, content, categoryId, isPublished } = req.body;
     const blog = await updateBlogService({
       id,
+      imageBuffer,
       title,
       content,
       categoryId,
-      isPublished,
+      isPublished: isPublished === "true" ? true : false,
       authorId: req.user.id,
     });
     successResponse({

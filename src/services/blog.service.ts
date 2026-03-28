@@ -3,6 +3,7 @@ import { prisma } from "../db";
 import redis_client from "../lib/redis";
 import { deleteCache } from "../utils/deleteCache";
 import { v2 as cloudinary, type UploadApiResponse } from "cloudinary";
+import { uploadImage } from "../utils/imageUpload";
 
 // create new blog
 export const createBlogService = async ({
@@ -43,7 +44,7 @@ export const createBlogService = async ({
         )
         .end(imageBuffer);
     });
-    if (!uploadResult.secure_url) {
+    if (!uploadResult.public_id) {
       throw createHttpError.InternalServerError("Failed to upload image");
     }
   }
@@ -55,7 +56,7 @@ export const createBlogService = async ({
       categoryId,
       authorId,
       isPublished,
-      image: uploadResult?.secure_url,
+      image: uploadResult?.public_id,
     },
   });
 
@@ -264,6 +265,7 @@ export const updateBlogService = async ({
   categoryId,
   authorId,
   isPublished,
+  imageBuffer,
 }: {
   id: string;
   title: string;
@@ -271,6 +273,7 @@ export const updateBlogService = async ({
   categoryId: string;
   authorId: string;
   isPublished: boolean;
+  imageBuffer?: Buffer;
 }) => {
   const blog = await prisma.blog.findUnique({
     where: {
@@ -286,6 +289,18 @@ export const updateBlogService = async ({
       "You are not authorized to update this blog",
     );
   }
+
+  let uploadResult: any;
+  if (imageBuffer) {
+    // delete old image if exist
+    if (blog.image) {
+      await cloudinary.uploader.destroy(blog.image);
+    }
+    uploadResult = await uploadImage(imageBuffer);
+    if (!uploadResult.public_id) {
+      throw createHttpError.InternalServerError("Failed to upload image");
+    }
+  }
   const updatedBlog = await prisma.blog.update({
     where: {
       id,
@@ -295,6 +310,7 @@ export const updateBlogService = async ({
       content,
       categoryId,
       isPublished,
+      ...(uploadResult?.public_id && { image: uploadResult.public_id }),
     },
   });
 
@@ -322,12 +338,20 @@ export const deleteBlogService = async (id: string, userId: string) => {
       "You are not authorized to delete this blog",
     );
   }
+
+  // if blog has image then delete it from cloudinary
+  if (blog.image) {
+    await cloudinary.uploader.destroy(blog.image);
+  }
   const deletedBlog = await prisma.blog.delete({
     where: { id },
   });
 
   // delete all blogs cache
   deleteCache("blogs:*");
+
+  // delete user's blogs cache
+  deleteCache(`user-blogs:${userId}:*`);
 
   // delete categories cache because the blog count of categories will be changed
   deleteCache("categories");

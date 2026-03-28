@@ -104,6 +104,7 @@ router.delete(
 router.put(
   "/:id",
   authMiddleware,
+  upload.single("image"),
   updateBlogValidator,
   validatedMiddleware,
   updateBlogController,
