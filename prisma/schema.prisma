@@ -12,6 +12,12 @@ datasource db {
   provider = "postgresql"
 }
 
+enum Role {
+  user
+  admin
+  super_admin
+}
+
 model User {
   id            String      @id
   name          String
@@ -29,7 +35,7 @@ model User {
   savedBlogs    SavedBlog[]
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
-  role          String?     @default("user")
+  role          Role        @default(user)
 
   @@unique([email])
   @@map("user")

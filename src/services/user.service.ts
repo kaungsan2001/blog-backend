@@ -355,3 +355,260 @@ export const getAllFollowingService = async ({
 
   return { users, metaData };
 };
+
+export const getAllAdminsService = async ({
+  page,
+  limit,
+  skip,
+}: {
+  page: number;
+  limit: number;
+  skip: number;
+}) => {
+  const admins = await prisma.user.findMany({
+    where: {
+      role: "admin",
+    },
+    skip,
+    take: limit,
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      image: true,
+      createdAt: true,
+      updatedAt: true,
+      role: true,
+      _count: {
+        select: {
+          blogs: true,
+          followers: true,
+          following: true,
+        },
+      },
+    },
+  });
+  const totalAdmins = await prisma.user.count({
+    where: {
+      role: "admin",
+    },
+  });
+  const totalPages = Math.ceil(totalAdmins / limit);
+  const metaData = {
+    currentPage: page,
+    limit,
+    totalAdmins,
+    totalPages,
+  };
+  return { admins, metaData };
+};
+
+// make user to admin
+export const makeAdminService = async (id: string, authUserId: string) => {
+  const user = await prisma.user.findUnique({
+    where: {
+      id,
+    },
+    select: { role: true },
+  });
+
+  if (!user) {
+    throw createHttpError.NotFound("User Not Found.");
+  }
+
+  if (user.role === "admin") {
+    throw createHttpError.BadRequest("User is already an admin.");
+  }
+
+  if (user.role === "super_admin") {
+    throw createHttpError.BadRequest("You can not make super admin.");
+  }
+
+  const updatedUser = await prisma.user.update({
+    where: {
+      id,
+    },
+    data: {
+      role: "admin",
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      image: true,
+      createdAt: true,
+      updatedAt: true,
+      role: true,
+      _count: {
+        select: {
+          blogs: true,
+          followers: true,
+          following: true,
+        },
+      },
+    },
+  });
+  return updatedUser;
+};
+
+// make admin --> user
+export const makeUserService = async (id: string, authUserId: string) => {
+  const user = await prisma.user.findUnique({
+    where: {
+      id,
+    },
+    select: { role: true },
+  });
+
+  if (!user) {
+    throw createHttpError.NotFound("User Not Found.");
+  }
+
+  if (user.role === "user") {
+    throw createHttpError.BadRequest("User is already a user.");
+  }
+
+  if (user.role === "super_admin") {
+    throw createHttpError.BadRequest("You can not demote super admin.");
+  }
+
+  const updatedUser = await prisma.user.update({
+    where: {
+      id,
+    },
+    data: {
+      role: "user",
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      image: true,
+      createdAt: true,
+      updatedAt: true,
+      role: true,
+      _count: {
+        select: {
+          blogs: true,
+          followers: true,
+          following: true,
+        },
+      },
+    },
+  });
+  return updatedUser;
+};
+
+export const deleteUserService = async (id: string, authUserId: string) => {
+  const user = await prisma.user.findUnique({
+    where: {
+      id,
+    },
+  });
+
+  const authUser = await prisma.user.findUnique({
+    where: {
+      id: authUserId,
+    },
+    select: {
+      role: true,
+    },
+  });
+
+  if (!user) {
+    throw createHttpError.NotFound("User Not Found.");
+  }
+
+  if (!authUser) {
+    throw createHttpError.NotFound("Admin Not Found.");
+  }
+
+  if (user.role === "admin" && authUser.role !== "super_admin") {
+    throw createHttpError.BadRequest("You can not delete admin.");
+  }
+
+  await prisma.user.delete({
+    where: {
+      id,
+    },
+  });
+  return user;
+};
+
+// admin: get all users with role info
+export const adminGetAllUsersService = async ({
+  page,
+  limit,
+  skip,
+  searchQuery,
+}: {
+  page: number;
+  limit: number;
+  skip: number;
+  searchQuery?: string;
+}) => {
+  const users = await prisma.user.findMany({
+    skip,
+    take: limit,
+    where: searchQuery
+      ? {
+          OR: [
+            { name: { contains: searchQuery, mode: "insensitive" } },
+            { email: { contains: searchQuery, mode: "insensitive" } },
+          ],
+        }
+      : {},
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      image: true,
+      createdAt: true,
+      updatedAt: true,
+      role: true,
+      _count: {
+        select: {
+          blogs: true,
+          followers: true,
+          following: true,
+        },
+      },
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
+  const totalUsers = await prisma.user.count({
+    where: searchQuery
+      ? {
+          OR: [
+            { name: { contains: searchQuery, mode: "insensitive" } },
+            { email: { contains: searchQuery, mode: "insensitive" } },
+          ],
+        }
+      : {},
+  });
+  const totalPages = Math.ceil(totalUsers / limit);
+  const metaData = {
+    totalUsers,
+    totalPages,
+    currentPage: page,
+    limit,
+  };
+
+  return { users, metaData };
+};
+
+// dashboard stats
+export const getDashboardStatsService = async () => {
+  const [totalUsers, totalBlogs, totalAdmins, totalCategories] =
+    await Promise.all([
+      prisma.user.count(),
+      prisma.blog.count(),
+      prisma.user.count({ where: { role: "admin" } }),
+      prisma.category.count(),
+    ]);
+
+  return { totalUsers, totalBlogs, totalAdmins, totalCategories };
+};

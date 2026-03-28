@@ -4,17 +4,6 @@ import { fromNodeHeaders } from "better-auth/node";
 import createHttpError from "http-errors";
 import asyncHandler from "express-async-handler";
 
-declare module "express-serve-static-core" {
-  interface Request {
-    user: {
-      id: string;
-      name: string;
-      email: string;
-      role: "user" | "admin";
-    };
-  }
-}
-
 const adminMiddleware = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     const session = await auth.api.getSession({
@@ -23,8 +12,8 @@ const adminMiddleware = asyncHandler(
     if (!session) {
       throw createHttpError(401, "Unauthorized");
     }
-    req.user = session.user;
-    if (session.user.role !== "admin") {
+    req.user = session.user as any;
+    if (session.user.role !== "admin" && session.user.role !== "super_admin") {
       throw createHttpError(403, "Forbidden");
     }
     next();

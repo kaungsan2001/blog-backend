@@ -383,12 +383,6 @@ export const searchBlogService = async ({
             mode: "insensitive",
           },
         },
-        {
-          content: {
-            contains: q,
-            mode: "insensitive",
-          },
-        },
       ],
     },
     include: {
@@ -413,12 +407,6 @@ export const searchBlogService = async ({
       OR: [
         {
           title: {
-            contains: q,
-            mode: "insensitive",
-          },
-        },
-        {
-          content: {
             contains: q,
             mode: "insensitive",
           },
@@ -571,4 +559,102 @@ export const getSavedBlogsService = async ({
     isSaved: true,
   }));
   return { blogs, metaData };
+};
+
+// admin: get all blogs (published + drafts)
+export const adminGetAllBlogsService = async ({
+  page,
+  limit,
+  skip,
+  searchQuery,
+}: {
+  page: number;
+  limit: number;
+  skip: number;
+  searchQuery: string;
+}) => {
+  const blogs = await prisma.blog.findMany({
+    skip,
+    take: limit,
+    where: searchQuery
+      ? {
+          OR: [
+            {
+              title: {
+                contains: searchQuery,
+                mode: "insensitive",
+              },
+            },
+          ],
+        }
+      : {},
+    include: {
+      author: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        },
+      },
+      category: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
+  const totalBlogs = await prisma.blog.count({
+    where: searchQuery
+      ? {
+          OR: [
+            {
+              title: {
+                contains: searchQuery,
+                mode: "insensitive",
+              },
+            },
+          ],
+        }
+      : {},
+  });
+  const totalPages = Math.ceil(totalBlogs / limit);
+  const metaData = {
+    totalBlogs,
+    totalPages,
+    currentPage: page,
+    limit,
+  };
+  return { blogs, metaData };
+};
+
+// admin: delete any blog (no ownership check)
+export const adminDeleteBlogService = async (id: string) => {
+  const blog = await prisma.blog.findUnique({
+    where: { id },
+  });
+
+  if (!blog) {
+    throw createHttpError.NotFound("Blog Not Found.");
+  }
+
+  // delete image from cloudinary if exists
+  if (blog.image) {
+    await cloudinary.uploader.destroy(blog.image);
+  }
+
+  const deletedBlog = await prisma.blog.delete({
+    where: { id },
+  });
+
+  // clear caches
+  deleteCache("blogs:*");
+  deleteCache(`user-blogs:${blog.authorId}:*`);
+  deleteCache("categories");
+
+  return deletedBlog;
 };

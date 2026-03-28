@@ -4,18 +4,7 @@ import { fromNodeHeaders } from "better-auth/node";
 import createHttpError from "http-errors";
 import asyncHandler from "express-async-handler";
 
-declare module "express-serve-static-core" {
-  interface Request {
-    user: {
-      id: string;
-      name: string;
-      email: string;
-      role: "user" | "admin" | "super_admin";
-    };
-  }
-}
-
-const authMiddleware = asyncHandler(
+const superAdminMiddleware = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     const session = await auth.api.getSession({
       headers: fromNodeHeaders(req.headers),
@@ -24,8 +13,11 @@ const authMiddleware = asyncHandler(
       throw createHttpError(401, "Unauthorized");
     }
     req.user = session.user as any;
+    if (session.user.role !== "super_admin") {
+      throw createHttpError(403, "Forbidden: Super Admin access required");
+    }
     next();
   },
 );
 
-export default authMiddleware;
+export default superAdminMiddleware;
