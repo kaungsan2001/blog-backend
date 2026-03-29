@@ -110,6 +110,7 @@ export const adminDeleteBlogController = asyncHandler(
 // get all admins
 export const adminGetAllAdminsController = asyncHandler(
   async (req: Request, res: Response) => {
+    const searchQuery = req.query.search as string;
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 12;
     const skip = (page - 1) * limit;
@@ -117,6 +118,7 @@ export const adminGetAllAdminsController = asyncHandler(
       page,
       limit,
       skip,
+      searchQuery,
     });
     successResponse({
       res,
@@ -161,8 +163,8 @@ export const makeUserController = asyncHandler(
 // create category (admin)
 export const adminCreateCategoryController = asyncHandler(
   async (req: Request, res: Response) => {
-    const { name } = req.body;
-    const category = await createCategory(name);
+    const { name, description } = req.body;
+    const category = await createCategory(name, description);
     successResponse({
       res,
       data: category,
@@ -176,8 +178,8 @@ export const adminCreateCategoryController = asyncHandler(
 export const adminUpdateCategoryController = asyncHandler(
   async (req: Request, res: Response) => {
     const categoryId = req.params.categoryId as string;
-    const { name } = req.body;
-    const category = await updateCategory(categoryId, name);
+    const { name, description } = req.body;
+    const category = await updateCategory(categoryId, name, description);
     successResponse({
       res,
       data: category,

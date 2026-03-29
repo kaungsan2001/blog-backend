@@ -36,11 +36,7 @@ router.delete("/blogs/:blogId", adminMiddleware, adminDeleteBlogController);
 
 // admins
 router.get("/admins", adminMiddleware, adminGetAllAdminsController);
-router.put(
-  "/admins/promote/:userId",
-  superAdminMiddleware,
-  makeAdminController,
-);
+router.put("/admins/promote/:userId", adminMiddleware, makeAdminController);
 router.put("/admins/demote/:userId", superAdminMiddleware, makeUserController);
 
 // categories

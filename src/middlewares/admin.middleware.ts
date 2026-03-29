@@ -14,7 +14,7 @@ const adminMiddleware = asyncHandler(
     }
     req.user = session.user as any;
     if (session.user.role !== "admin" && session.user.role !== "super_admin") {
-      throw createHttpError(403, "Forbidden");
+      throw createHttpError(403, "Forbidden: Admin access required");
     }
     next();
   },

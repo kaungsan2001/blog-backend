@@ -360,14 +360,20 @@ export const getAllAdminsService = async ({
   page,
   limit,
   skip,
+  searchQuery,
 }: {
   page: number;
   limit: number;
   skip: number;
+  searchQuery: string;
 }) => {
   const admins = await prisma.user.findMany({
     where: {
-      role: "admin",
+      OR: [{ role: "admin" }, { role: "super_admin" }],
+      name: {
+        contains: searchQuery,
+        mode: "insensitive",
+      },
     },
     skip,
     take: limit,
@@ -391,6 +397,10 @@ export const getAllAdminsService = async ({
   const totalAdmins = await prisma.user.count({
     where: {
       role: "admin",
+      name: {
+        contains: searchQuery,
+        mode: "insensitive",
+      },
     },
   });
   const totalPages = Math.ceil(totalAdmins / limit);

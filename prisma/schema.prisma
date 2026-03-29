@@ -108,11 +108,12 @@ model Blog {
 }
 
 model Category {
-  id        String   @id @default(uuid())
-  name      String   @unique
-  blogs     Blog[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?  @default("")
+  blogs       Blog[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@map("category")
 }

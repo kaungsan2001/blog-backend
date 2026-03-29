@@ -67,7 +67,7 @@ export const createBlogService = async ({
   deleteCache(`user-blogs:${authorId}:*`);
 
   // delete categories cache because the blog count of categories will be changed
-  deleteCache("categories");
+  deleteCache("categories:");
 
   return blog;
 };
