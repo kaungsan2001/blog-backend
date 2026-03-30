@@ -4,6 +4,28 @@ import { faker } from "@faker-js/faker";
 
 async function main() {
   console.log("seeding");
+  const categories = [
+    {
+      name: "Technology",
+      description: "This is technology category",
+    },
+    {
+      name: "Travel",
+      description: "This is travel category",
+    },
+    {
+      name: "Food",
+      description: "This is food category",
+    },
+    {
+      name: "Fashion",
+      description: "This is fashion category",
+    },
+    {
+      name: "Health",
+      description: "This is health category",
+    },
+  ];
   try {
     for (let i = 0; i < 10; i++) {
       const user = await auth.api.signUpEmail({

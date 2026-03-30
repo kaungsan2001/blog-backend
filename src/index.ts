@@ -12,8 +12,15 @@ import userRouter from "./routes/v1/user.route";
 import categoryRouter from "./routes/v1/category.route";
 import adminRouter from "./routes/v1/admin.route";
 import redis_client from "./lib/redis";
+import limiter from "./middlewares/rateLimit.middleware";
+import helmet from "helmet";
+import morgan from "morgan";
+import fs from "fs";
+import path from "path";
 
 const app = express();
+
+app.use(helmet());
 const port = 8000;
 app.use(
   cors({
@@ -22,6 +29,17 @@ app.use(
     methods: ["GET", "POST", "PUT", "DELETE"],
   }),
 );
+
+app.use(limiter);
+
+// logging api requests
+const accessLogStream = fs.createWriteStream(
+  path.join(__dirname, "logs/access.log"),
+  {
+    flags: "a",
+  },
+);
+app.use(morgan("dev", { stream: accessLogStream }));
 
 app.all("/api/auth/{*any}", toNodeHandler(auth));
 
@@ -35,17 +53,30 @@ app.use("/api/v1/admin", adminRouter);
 
 app.use(errorHandler);
 
-app
-  .listen(port, () => {
-    console.log(`Better Auth app listening on port ${port}`);
-  })
-  .on("error", (error) => {
-    console.log(error);
-  });
-
 redis_client.on("error", (err) => console.log("Redis Client Error", err));
+redis_client.on("connect", () => console.log("Redis Client Connected"));
+redis_client.on("end", () => console.log("Redis Client Disconnected"));
 
-await redis_client.connect();
+async function startServer() {
+  try {
+    await redis_client.connect();
+    app.listen(port, () => {
+      console.log(`Server is running on port ${port}`);
+    });
+  } catch (error) {
+    console.log(error);
+    redis_client.quit();
+    process.exit(1);
+  }
+}
+
+startServer();
+
+process.on("SIGINT", async () => {
+  console.log("Closing server...");
+  await redis_client.quit();
+  process.exit(0);
+});
 
 function errorHandler(
   err: any,

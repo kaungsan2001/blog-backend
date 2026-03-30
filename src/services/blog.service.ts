@@ -67,7 +67,7 @@ export const createBlogService = async ({
   deleteCache(`user-blogs:${authorId}:*`);
 
   // delete categories cache because the blog count of categories will be changed
-  deleteCache("categories:");
+  deleteCache("categories:*");
 
   return blog;
 };
@@ -317,7 +317,7 @@ export const updateBlogService = async ({
   // delete all blogs cache
   deleteCache("blogs:*");
   deleteCache(`user-blogs:${authorId}:*`);
-  deleteCache("categories");
+  deleteCache("categories:*");
 
   return updatedBlog;
 };
@@ -354,7 +354,7 @@ export const deleteBlogService = async (id: string, userId: string) => {
   deleteCache(`user-blogs:${userId}:*`);
 
   // delete categories cache because the blog count of categories will be changed
-  deleteCache("categories");
+  deleteCache("categories:*");
 
   return deletedBlog;
 };
@@ -654,7 +654,7 @@ export const adminDeleteBlogService = async (id: string) => {
   // clear caches
   deleteCache("blogs:*");
   deleteCache(`user-blogs:${blog.authorId}:*`);
-  deleteCache("categories");
+  deleteCache("categories:*");
 
   return deletedBlog;
 };

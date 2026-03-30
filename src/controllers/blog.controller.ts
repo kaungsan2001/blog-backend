@@ -22,9 +22,9 @@ export const createBlogController = asyncHandler(
     const userId = req.user.id;
     const blog = await createBlogService({
       imageBuffer,
-      title,
-      content,
-      categoryId,
+      title: title.toString().trim(),
+      content: content.toString().trim(),
+      categoryId: categoryId.toString().trim(),
       authorId: userId,
       isPublished: isPublished === "true" ? true : false,
     });
@@ -116,9 +116,9 @@ export const updateBlogController = asyncHandler(
     const blog = await updateBlogService({
       id,
       imageBuffer,
-      title,
-      content,
-      categoryId,
+      title: title.toString().trim(),
+      content: content.toString().trim(),
+      categoryId: categoryId.toString().trim(),
       isPublished: isPublished === "true" ? true : false,
       authorId: req.user.id,
     });

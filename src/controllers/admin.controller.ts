@@ -35,7 +35,7 @@ export const getDashboardStatsController = asyncHandler(
 // get all users (admin)
 export const adminGetAllUsersController = asyncHandler(
   async (req: Request, res: Response) => {
-    const searchQuery = req.query.search as string;
+    const searchQuery = req.query.search?.toString().trim() || "";
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 12;
     const skip = (page - 1) * limit;
@@ -73,7 +73,7 @@ export const adminDeleteUserController = asyncHandler(
 // get all blogs (admin)
 export const adminGetAllBlogsController = asyncHandler(
   async (req: Request, res: Response) => {
-    const searchQuery = req.query.search as string;
+    const searchQuery = req.query.search?.toString().trim() || "";
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 12;
     const skip = (page - 1) * limit;
@@ -96,7 +96,7 @@ export const adminGetAllBlogsController = asyncHandler(
 // delete blog (admin)
 export const adminDeleteBlogController = asyncHandler(
   async (req: Request, res: Response) => {
-    const blogId = req.params.blogId as string;
+    const blogId = req.params.blogId!.toString().trim();
     const blog = await adminDeleteBlogService(blogId);
     successResponse({
       res,
@@ -110,7 +110,7 @@ export const adminDeleteBlogController = asyncHandler(
 // get all admins
 export const adminGetAllAdminsController = asyncHandler(
   async (req: Request, res: Response) => {
-    const searchQuery = req.query.search as string;
+    const searchQuery = req.query.search?.toString().trim() || "";
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 12;
     const skip = (page - 1) * limit;
@@ -133,7 +133,7 @@ export const adminGetAllAdminsController = asyncHandler(
 // promote user to admin (super_admin only)
 export const makeAdminController = asyncHandler(
   async (req: Request, res: Response) => {
-    const userId = req.params.userId as string;
+    const userId = req.params.userId!.toString().trim();
     const authUserId = req.user.id;
     const user = await makeAdminService(userId, authUserId);
     successResponse({
@@ -148,7 +148,7 @@ export const makeAdminController = asyncHandler(
 // demote admin to user (super_admin only)
 export const makeUserController = asyncHandler(
   async (req: Request, res: Response) => {
-    const userId = req.params.userId as string;
+    const userId = req.params.userId!.toString().trim();
     const authUserId = req.user.id;
     const user = await makeUserService(userId, authUserId);
     successResponse({
@@ -164,7 +164,10 @@ export const makeUserController = asyncHandler(
 export const adminCreateCategoryController = asyncHandler(
   async (req: Request, res: Response) => {
     const { name, description } = req.body;
-    const category = await createCategory(name, description);
+    const category = await createCategory(
+      name.toString().trim(),
+      description.toString().trim(),
+    );
     successResponse({
       res,
       data: category,
@@ -177,9 +180,13 @@ export const adminCreateCategoryController = asyncHandler(
 // update category (admin)
 export const adminUpdateCategoryController = asyncHandler(
   async (req: Request, res: Response) => {
-    const categoryId = req.params.categoryId as string;
+    const categoryId = req.params.categoryId!.toString().trim();
     const { name, description } = req.body;
-    const category = await updateCategory(categoryId, name, description);
+    const category = await updateCategory(
+      categoryId,
+      name.toString().trim(),
+      description.toString().trim(),
+    );
     successResponse({
       res,
       data: category,
@@ -192,7 +199,7 @@ export const adminUpdateCategoryController = asyncHandler(
 // delete category (admin)
 export const adminDeleteCategoryController = asyncHandler(
   async (req: Request, res: Response) => {
-    const categoryId = req.params.categoryId as string;
+    const categoryId = req.params.categoryId!.toString().trim();
     const category = await deleteCategory(categoryId);
     successResponse({
       res,

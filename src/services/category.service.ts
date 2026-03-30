@@ -51,7 +51,7 @@ export const createCategory = async (name: string, description: string) => {
   if (category) {
     throw createHttpError.Conflict("Category already exists");
   }
-  deleteCache("categories:");
+  deleteCache("categories:*");
   const categories = await prisma.category.create({
     data: { name, description },
   });
@@ -68,7 +68,7 @@ export const updateCategory = async (
   if (!category) {
     throw createHttpError.NotFound("Category not found");
   }
-  deleteCache("categories:");
+  deleteCache("categories:*");
   const updatedCategory = await prisma.category.update({
     where: { id },
     data: { name, description },
@@ -82,7 +82,7 @@ export const deleteCategory = async (id: string) => {
   if (!category) {
     throw createHttpError.NotFound("Category not found");
   }
-  deleteCache("categories:");
+  deleteCache("categories:*");
   const deletedCategory = await prisma.category.delete({ where: { id } });
 
   return deletedCategory;
