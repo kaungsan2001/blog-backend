@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "bun run src/index.ts",
-    "start": "bun run src/index.ts"
+    "start": "bunx --bun prisma generate && bun run src/index.ts"
   },
   "peerDependencies": {
     "typescript": "^5"
