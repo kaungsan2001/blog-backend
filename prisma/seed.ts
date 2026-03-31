@@ -4,6 +4,7 @@ import { faker } from "@faker-js/faker";
 
 async function main() {
   console.log("seeding");
+
   const categories = [
     {
       name: "Technology",
@@ -25,9 +26,29 @@ async function main() {
       name: "Health",
       description: "This is health category",
     },
+    {
+      name: "AI",
+      description: "This is AI category",
+    },
+    {
+      name: "Javascript",
+      description: "This is javascript category",
+    },
+    {
+      name: "Java",
+      description: "This is Java Category`",
+    },
+    {
+      name: "Python",
+      description: "This is Pyton Category`",
+    },
+    {
+      name: "C++",
+      description: "This is C++ Category",
+    },
   ];
   try {
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < categories.length; i++) {
       const user = await auth.api.signUpEmail({
         body: {
           name: faker.person.fullName(),
@@ -37,9 +58,7 @@ async function main() {
       });
 
       const category = await prisma.category.create({
-        data: {
-          name: faker.lorem.word(),
-        },
+        data: categories[i]!,
       });
 
       const blogs = [];
@@ -47,8 +66,9 @@ async function main() {
         blogs.push({
           title: faker.lorem.sentence(),
           categoryId: category.id,
-          content: faker.lorem.paragraphs(15),
+          content: faker.lorem.paragraphs(35),
           authorId: user.user.id,
+          isPublished: true,
         });
       }
 

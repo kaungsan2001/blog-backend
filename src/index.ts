@@ -17,6 +17,7 @@ import helmet from "helmet";
 import morgan from "morgan";
 import fs from "fs";
 import path from "path";
+import compression from "compression";
 
 const app = express();
 
@@ -24,13 +25,14 @@ app.use(helmet());
 const port = 8000;
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: process.env.FRONTEND_URL,
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE"],
   }),
 );
 
 app.use(limiter);
+app.use(compression());
 
 // logging api requests
 const accessLogStream = fs.createWriteStream(

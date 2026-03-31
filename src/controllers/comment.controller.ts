@@ -31,7 +31,7 @@ export const createCommentController = asyncHandler(
 export const getCommentsController = asyncHandler(
   async (req: Request, res: Response) => {
     const blogId = req.params.blogId as string;
-    console.log(blogId);
+
     const comments = await getCommentsService(blogId);
     successResponse({
       res,
