@@ -14,9 +14,6 @@ import adminRouter from "./routes/v1/admin.route";
 import redis_client from "./lib/redis";
 import limiter from "./middlewares/rateLimit.middleware";
 import helmet from "helmet";
-import morgan from "morgan";
-import fs from "fs";
-import path from "path";
 import compression from "compression";
 
 const app = express();
@@ -33,15 +30,6 @@ app.use(
 
 app.use(limiter);
 app.use(compression());
-
-// logging api requests
-const accessLogStream = fs.createWriteStream(
-  path.join(__dirname, "logs/access.log"),
-  {
-    flags: "a",
-  },
-);
-app.use(morgan("dev", { stream: accessLogStream }));
 
 app.all("/api/auth/{*any}", toNodeHandler(auth));
 
