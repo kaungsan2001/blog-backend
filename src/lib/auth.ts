@@ -7,6 +7,17 @@ export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),
+  baseURL: process.env.BETTER_AUTH_URL,
+  trustedOrigins: [process.env.FRONTEND_URL!],
+  advanced: {
+    useSecureCookies: true,
+    defaultCookieAttributes: {
+      httpOnly: true,
+      sameSite: "none",
+      secure: true,
+      path: "/",
+    },
+  },
   secondaryStorage: {
     get: async (key) => {
       return await redis_client.get(key);
