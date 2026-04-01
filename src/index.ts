@@ -19,7 +19,7 @@ import compression from "compression";
 const app = express();
 
 app.use(helmet());
-const port = 8000;
+const port = 3000;
 app.use(
   cors({
     origin: process.env.FRONTEND_URL,
