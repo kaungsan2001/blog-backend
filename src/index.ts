@@ -28,11 +28,11 @@ app.use(
   }),
 );
 
-app.use(limiter);
 app.use(compression());
 
 app.all("/api/auth/{*any}", toNodeHandler(auth));
 
+app.use(limiter);
 app.use(express.json());
 
 app.use("/api/v1/blogs", blogRouter);
