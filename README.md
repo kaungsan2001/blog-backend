@@ -43,7 +43,7 @@ prisma/
 
    ```env
    BETTER_AUTH_SECRET=your-auth-secret
-   BETTER_AUTH_URL=your-frontend-url
+   BETTER_AUTH_URL=your-backend-url
    DATABASE_URL=
    DIRECT_URL=
    FRONTEND_URL=your-frontend-url (Example: http://localhost:5173 or https://your-domain.com)
@@ -72,7 +72,7 @@ prisma/
    bun run dev
    ```
 
-   The server will start (typically on port 3000, depending on your setup).
+   The server will start (typically on port 8000, depending on your setup).
 
 5. **Production Start**
 

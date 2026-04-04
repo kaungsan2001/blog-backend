@@ -61,11 +61,7 @@ export const getUserListService = async ({
   const users = await prisma.user.findMany({
     skip,
     take: limit,
-    where: {
-      id: {
-        not: userId,
-      },
-    },
+
     select: {
       id: true,
       name: true,
@@ -78,15 +74,12 @@ export const getUserListService = async ({
         },
       },
     },
-  });
-
-  const totalUsers = await prisma.user.count({
-    where: {
-      id: {
-        not: userId,
-      },
+    orderBy: {
+      createdAt: "desc",
     },
   });
+
+  const totalUsers = await prisma.user.count();
   const totalPages = Math.ceil(totalUsers / limit);
   const metaData = {
     totalUsers,
