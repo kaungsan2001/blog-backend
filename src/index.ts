@@ -15,10 +15,12 @@ import redis_client from "./lib/redis";
 import limiter from "./middlewares/rateLimit.middleware";
 import helmet from "helmet";
 import compression from "compression";
+import morgan from "morgan";
 
 const app = express();
 
 app.use(helmet());
+app.use(morgan("dev"));
 const port = 8000;
 app.use(
   cors({
@@ -35,6 +37,7 @@ app.all("/api/auth/{*any}", toNodeHandler(auth));
 app.use(limiter);
 app.use(express.json());
 
+app.get("/check", (req, res) => res.json({ message: "ok" }));
 app.use("/api/v1/blogs", blogRouter);
 app.use("/api/v1/categories", categoryRouter);
 app.use("/api/v1/blogs/:blogId/comments", commentRouter);
